@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  * plugins/auth/RDLUser/scheduledTasks.xml
+  *
+  -->
+
+<!DOCTYPE scheduled_tasks SYSTEM "../../../lib/pkp/dtd/scheduledTasks.dtd">
+
+<scheduled_tasks>
+    <task class="plugins.generic.confirmMembership.ConfirmMembershipTask">
+        <descr>Send mail to users to ask them to login for confirming membership oherwise we delete there account..</descr>
+        <frequency hour="1"/>
+    </task>
+</scheduled_tasks>
