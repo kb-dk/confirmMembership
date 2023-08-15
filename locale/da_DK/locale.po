@@ -34,3 +34,9 @@ msgstr "enne e-mail-skabelon bruges til at underrette brugerne om at de skal gen
 
 msgid "confirmmembership.emails.body"
 msgstr "Kære locale {$fullname} Vi kan se, at det er længe siden, at du har været logget ind på Det Kgl. Bibliotek. I tråd med vores brugerreglement sletter vi din brugerkonto, når der er gået mere end 1 år, siden du sidst har brugt den. For at undgå at din konto bliver slettet, skal du logge ind hos os på  https://www.kb.dk/ indenfor den næste måned. Bliver din brugerkonto slettet, er du altid velkommen til at oprette en ny."
+
+msgid "plugins.generic.rdluser.testemails"
+msgstr "Semikolonsepareret streng af mails der skal sendes til når test er slået til"
+
+msgid "plugins.generic.rdluser.test"
+msgstr "Hvis aktiveret sendes bekræft medlemskab mails til emails i nedenstående felt"

@@ -32,7 +32,7 @@ class ConfirmMembershipTask extends ScheduledTask {
     private function mergeUsersNotConfirmed($userDao, $journalDao, $pluginSettings) {
         $roleIds = $pluginSettings->getSetting(CONTEXT_SITE, 'roleids');
         $daysToMerged = $pluginSettings->getSetting(CONTEXT_SITE, 'daysmerged');
-        dump($daysToMerged);
+        $merge =  $userDao->getByUsername($pluginSettings->getSetting(CONTEXT_SITE, 'mergeusername'));
         $mergesUserId = $userDao->getByUsername($pluginSettings->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
         $roleIds = explode(',', $roleIds);
         $paras = [CONFIRM_MEMBERSHIP_DISABLED_REASON, SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate()];
@@ -115,7 +115,18 @@ class ConfirmMembershipTask extends ScheduledTask {
 
             import('lib.pkp.classes.mail.MailTemplate');
             $mail = new MailTemplate('COMFIRMMEMBERSHIP_MEMBERSHIP', 'en_US');
-            $mail->addRecipient($user->getEmail(), $user->getFullName());
+            if ($pluginSettings->getSetting(CONTEXT_SITE, 'test')) {
+                dump($pluginSettings->getSetting(CONTEXT_SITE, 'testemails'));
+                $testmails = explode( ';', $pluginSettings->getSetting(CONTEXT_SITE, 'testemails'));
+                dump($testmails);
+                foreach ($testmails as $testmail) {
+                    dump($testmail);
+                    $mail->addRecipient($testmail);
+                }
+            } else {
+                $mail->addRecipient($user->getEmail(), $user->getFullName());
+            }
+
             $mail->assignParams([
                 'fullname' => $user->getFullName(),
                 'site' => $journalsNames,

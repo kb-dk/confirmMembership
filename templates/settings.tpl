@@ -31,6 +31,19 @@
 		{fbvFormSection}
 			{fbvElement type="text" id="mergeusername" value=$mergeusername label="plugins.generic.confirmmembership.mergeusername" }
 		{/fbvFormSection}
+		{fbvFormSection list="true"}
+
+	{if $test}
+		{assign var="checked" value=true}
+	{else}
+		{assign var="checked" value=false}
+	{/if}
+
+			{fbvElement	type="checkbox" id="test" value="1" checked=$checked  label="plugins.generic.rdluser.test" }
+		{/fbvFormSection}
+		{fbvFormSection}
+			{fbvElement type="text" id="testemails" value=$testemails label="plugins.generic.rdluser.testemails" }
+	    {/fbvFormSection}
 	{/fbvFormArea}
 	{fbvFormButtons submitText="common.save"}
 </form>
