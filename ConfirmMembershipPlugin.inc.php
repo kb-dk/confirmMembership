@@ -18,10 +18,21 @@ class ConfirmMembershipPlugin extends GenericPlugin {
      */
     function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
+
         HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
         return $success;
     }
+    function setEnabled($enabled) {
+        if ($enabled) {
+            $emailFile = $this->getPluginPath() . "/locale/en_US/emails.po";
+            AppLocale::registerLocaleFile('en_US', $emailFile);
+            $emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
+            /* @var $emailTemplateDao EmailTemplateDAO */
+            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
+        }
+      parent::setEnabled($enabled);
 
+    }
     function getInstallSitePluginSettingsFile() {
         return $this->getPluginPath() . '/settings.xml';
     }
@@ -37,7 +48,9 @@ class ConfirmMembershipPlugin extends GenericPlugin {
      * @return bolean
      */
     function callbackParseCronTab($hookName, $args) {
+        error_log('callbackParseCronTab 1');
         if ($this->getEnabled() || !Config::getVar('general', 'installed')) {
+            error_log('callbackParseCronTab');
             $taskFilesPath =& $args[0];
             $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
         }
@@ -61,9 +74,12 @@ class ConfirmMembershipPlugin extends GenericPlugin {
         return $this->getPluginPath() . '/settings.xml';
     }
 
-    function getCanEnable() {
+    function getCanEnable()
+    {
         return true;
     }
+
+
     /**
      * @see Plugin::isSitePlugin()
      */

@@ -45,14 +45,16 @@ class ConfirmMembershipTask extends ScheduledTask {
         foreach ($usersToDelete as $userId) {
             dump($userId);
             $user = $userDao->getById($userId->user_id);
+            if ($this->userHasSubmission($user->getId())) {
+                $this->userCantBeDeleted($user, $userDao);
+                continue;
+            }
             $journals = $journalDao->getAll();
             while ($journal = $journals->next()) {
                 if ($user->getRoles($journal->getId())) {
                     foreach ($user->getRoles($journal->getId()) as $role) {
                         if (!in_array($role->getId(), $roleIds)) {
-                            $user->setDisabledReason('Disabled by Confirm Membership plugin - delete have to be done manually');
-                            $user->updateSetting(SETTING_CAN_NOT_DELETE, true, 'bool', 0);
-                            $userDao->updateObject($user);
+                            $this->userCantBeDeleted($user, $userDao);
                             break;
                         }
                     }
@@ -79,7 +81,9 @@ class ConfirmMembershipTask extends ScheduledTask {
         foreach ($result as $userId) {
             dump($userId);
             $memberJournals = [];
+
             $user = $userDao->getById($userId->user_id);
+
             //dump($user);
             $timestamp = new DateTime(Core::getCurrentDate());
             dump('user_id:' . $user->getId());
@@ -121,5 +125,16 @@ class ConfirmMembershipTask extends ScheduledTask {
             }
         }
     }
-
+    private function userCantBeDeleted ($user, $userDao) {
+        $user->setDisabledReason('Disabled by Confirm Membership plugin - delete have to be done manually');
+        $user->updateSetting(SETTING_CAN_NOT_DELETE, true, 'bool', 0);
+        $userDao->updateObject($user);
+    }
+    private function userHasSubmission($userId) {
+        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
+        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*)  AS row_count from stage_assignments where user_id = $userId"); //DB::table('stage_assignments')->where('user_id', $userId);
+        $current = $checkUserSubmissions->current();
+        $row = $current;
+        return $row ? (boolean) $row->row_count : false;
+    }
 }
