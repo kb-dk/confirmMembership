@@ -12,4 +12,5 @@
   -->
 <emails>
     <email key="COMFIRMMEMBERSHIP_MEMBERSHIP" can_edit="1" can_disable="0" subject="confirmmembership.emails.subject" description="confirmmembership.emails.description" body="confirmmembership.emails.body"/>
+    <email key="COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP" can_edit="1" can_disable="0" subject="confirmmembershipnojournals.emails.subject" description="confirmmembershipnojournals.emails.description" body="confirmmembershipnojournals.emails.body"/>
 </emails>

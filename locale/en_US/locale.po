@@ -8,13 +8,11 @@ msgid "plugins.generic.confirmmembership.description"
 msgstr "Plugin to confirmmembership users"
 
 msgid "plugins.generic.confirmmembership.maxusers"
-msgstr "Max number of users to send confirmemails when the task is  running"
+msgstr "Max number of users to send confirmemails when the task is running"
 
 msgid "plugins.generic.confirmmembership.daysmail"
 msgstr "Number of days from last login to we send a confirm membership mail"
 
-msgid "plugins.generic.confirmmembership.daysdisabled"
-msgstr "Number of days from confirmail send to we disabled the account"
 
 msgid "plugins.generic.confirmmembership.daysmerged"
 msgstr "Number of days from confirmail send to we merge the account"
@@ -25,20 +23,8 @@ msgstr "ConfirmMembershipTask"
 msgid "plugins.generic.confirmmembership.mergeusername"
 msgstr "Username of the user the delete users are to be merged into"
 
-msgid "plugins.generic.confirmmembership.mergeusername"
-msgstr "Username of the user the delete users are to be merged into"
-
-msgid "confirmmembership.emails.subject"
-msgstr "Din brugerkonto til Det Kgl. Bibliotek slettes"
-
-msgid "confirmmembership.emails.description"
-msgstr "enne e-mail-skabelon bruges til at underrette brugerne om at de skal genbekræfte deres medlemskal"
-
-msgid "confirmmembership.emails.body"
-msgstr "Kære {$fullname} Vi kan se, at det er længe siden, at du har været logget ind på Det Kgl. Bibliotek. I tråd med vores brugerreglement sletter vi din brugerkonto, når der er gået mere end 1 år, siden du sidst har brugt den. For at undgå at din konto bliver slettet, skal du logge ind hos os på  https://www.kb.dk/ indenfor den næste måned. Bliver din brugerkonto slettet, er du altid velkommen til at oprette en ny."
-
 msgid "plugins.generic.rdluser.testemails"
-msgstr "semicolon separated string of emails to be sent to when testing is enabled"
+msgstr "Semicolon separated string of emails to be sent to when testing is enabled"
 
 msgid "plugins.generic.rdluser.test"
 msgstr "If activated, confirm membership emails are sent to emails in the field below"

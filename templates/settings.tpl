@@ -23,10 +23,7 @@
 			{fbvElement type="text" id="daysmail" value=$daysmail label="plugins.generic.confirmmembership.daysmail" }
 		{/fbvFormSection}
 		{fbvFormSection}
-			{fbvElement type="text" id="daysdisabled" value=$daysdisabled label="plugins.generic.confirmmembership.daysdisabled" }
-		{/fbvFormSection}
-		{fbvFormSection}
-			{fbvElement type="text" id="daysmerged" value=$daysdisabled label="plugins.generic.confirmmembership.daysmerged" }
+			{fbvElement type="text" id="daysmerged" value=$daysmerged label="plugins.generic.confirmmembership.daysmerged" }
 		{/fbvFormSection}
 		{fbvFormSection}
 			{fbvElement type="text" id="mergeusername" value=$mergeusername label="plugins.generic.confirmmembership.mergeusername" }

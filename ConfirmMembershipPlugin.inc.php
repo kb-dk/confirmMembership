@@ -29,6 +29,7 @@ class ConfirmMembershipPlugin extends GenericPlugin {
             $emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
             /* @var $emailTemplateDao EmailTemplateDAO */
             $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
+            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP');
         }
       parent::setEnabled($enabled);
 

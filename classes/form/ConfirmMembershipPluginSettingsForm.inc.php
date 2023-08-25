@@ -33,7 +33,6 @@ class ConfirmMembershipPluginSettingsForm extends Form {
         $this->setData('maxusers', $this->plugin->getSetting(CONTEXT_SITE, 'maxusers'));
         $this->setData('mergeusername', $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername'));
         $this->setData('daysmail', $this->plugin->getSetting(CONTEXT_SITE, 'daysmail'));
-        $this->setData('daysdisabled', $this->plugin->getSetting(CONTEXT_SITE, 'daysdisabled'));
         $this->setData('daysmerged', $this->plugin->getSetting(CONTEXT_SITE, 'daysmerged'));
         $this->setData('test', $this->plugin->getSetting(CONTEXT_SITE, 'test'));
         $this->setData('testemails', $this->plugin->getSetting(CONTEXT_SITE, 'testemails'));
@@ -48,7 +47,6 @@ class ConfirmMembershipPluginSettingsForm extends Form {
         $this->readUserVars(['maxusers']);
         $this->readUserVars(['mergeusername']);
         $this->readUserVars(['daysmail']);
-        $this->readUserVars(['daysdisabled']);
         $this->readUserVars(['daysmerged']);
         $this->readUserVars(['test']);
         $this->readUserVars(['testemails']);
@@ -80,7 +78,6 @@ class ConfirmMembershipPluginSettingsForm extends Form {
         $this->plugin->updateSetting(CONTEXT_SITE, 'maxusers', $this->getData('maxusers'));
         $this->plugin->updateSetting(CONTEXT_SITE, 'mergeusername', $this->getData('mergeusername'));
         $this->plugin->updateSetting(CONTEXT_SITE, 'daysmail', $this->getData('daysmail'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'daysdisabled', $this->getData('daysdisabled'));
         $this->plugin->updateSetting(CONTEXT_SITE, 'daysmerged', $this->getData('daysmerged'));
         $this->plugin->updateSetting(CONTEXT_SITE, 'test', $this->getData('test'));
         $this->plugin->updateSetting(CONTEXT_SITE, 'testemails', $this->getData('testemails'));
