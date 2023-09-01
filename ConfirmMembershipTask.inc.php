@@ -17,9 +17,7 @@ import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('classes.user.UserAction');
 import('plugins.generic.RDLUser.RDLUserPlugin');
 import('lib.pkp.classes.mail.MailTemplate');
-define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
-define("SETTING_MEMBERSHIP_MAIL_SEND", "confirmmembershipmailsend");
-define("CONFIRM_MEMBERSHIP_DISABLED_REASON", 'Membership not yet confirmed');
+
 class ConfirmMembershipTask extends ScheduledTask {
     
     public function executeActions() {
@@ -44,9 +42,11 @@ class ConfirmMembershipTask extends ScheduledTask {
        and user_id != ? order by RANDOM() LIMIT ? ",
         $paras);
         $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
+        $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
         foreach ($result as $userId) {
             $memberJournals = [];
             $user = $userDao->getById($userId->user_id);
+            dump($user->getId());
             // It is not time to merge the user.
             if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) && $timestamp < new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND)) || $user->getData(SETTING_CAN_NOT_DELETE)) {
                 continue;
@@ -57,14 +57,14 @@ class ConfirmMembershipTask extends ScheduledTask {
                 continue;
             }
             $userCantBeDeleted = false;
-            if ($this->userHasSubmission($user->getId())) {
+            if ($this->userHasReviews($user->getId()) || $this->userHasSubmission($user->getId())) {
                 $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
                 continue;
             }
             $journals = $journalDao->getAll();
             // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
             while ($journal = $journals->next()) {
-                if ($subscriptionDao->isValidIndividualSubscription($user->getId(), $journal->getId())) {
+                if ($subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
                     $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
                     break;
                 }
@@ -99,7 +99,6 @@ class ConfirmMembershipTask extends ScheduledTask {
                 ]);
                  if ($mail->send()) {
                     $user->updateSetting(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate(), 'Date', 0);
-                    dump('mail send to ' . $user->getId());
                 }
             }
         }
@@ -108,6 +107,12 @@ class ConfirmMembershipTask extends ScheduledTask {
         $user->updateSetting(SETTING_CAN_NOT_DELETE, true, 'bool', 0);
         $userDao->updateObject($user);
         return true;
+    }
+    private function userHasReviews($userId) {
+        $reviewersignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
+        $checkUserSubmissions = $reviewersignmentDao->retrieve('SELECT count(*)  AS row_count  FROM review_assignments  where reviewer_id = ? ', [$userId]); //DB::table('stage_assignments')->where('user_id', $userId);
+        $row = $checkUserSubmissions->current();
+        return $row ? (boolean) $row->row_count : false;
     }
     private function userHasSubmission($userId) {
         $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */

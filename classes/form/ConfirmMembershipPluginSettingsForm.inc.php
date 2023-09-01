@@ -8,7 +8,7 @@
  */
 
 import('lib.pkp.classes.form.Form');
-
+import('lib.pkp.classes.form.Form');
 class ConfirmMembershipPluginSettingsForm extends Form {
 
 	public $plugin;
@@ -74,22 +74,34 @@ class ConfirmMembershipPluginSettingsForm extends Form {
 	 * Save the settings
 	 */
 	public function execute(...$functionArgs) {
-		$this->plugin->updateSetting(CONTEXT_SITE, 'roleids', $this->getData('roleids'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'maxusers', $this->getData('maxusers'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'mergeusername', $this->getData('mergeusername'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'daysmail', $this->getData('daysmail'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'daysmerged', $this->getData('daysmerged'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'test', $this->getData('test'));
-        $this->plugin->updateSetting(CONTEXT_SITE, 'testemails', $this->getData('testemails'));
-		// Tell the user that the save was successful.
-		import('classes.notification.NotificationManager');
-		$notificationMgr = new NotificationManager();
-		$notificationMgr->createTrivialNotification(
-			Application::get()->getRequest()->getUser()->getId(),
-			NOTIFICATION_TYPE_SUCCESS,
-			['contents' => __('common.changesSaved')]
-		);
+        $returner = parent::execute(...$functionArgs);
+        $request = Application::get()->getRequest();
+        error_log('execute');
+        $values = $request->getUserVars();
+        if (isset($values['delecteUserSetting'])) {
+            error_log('delete');
+            $userSettingsDao = DAORegistry::getDAO('UserSettingsDAO'); /* @var $userSettingsDao UserSettingsDAO */
+            $paras = [SETTING_CAN_NOT_DELETE];
+           // $userSettingsDao->
+            $result =  $userSettingsDao->update("DELETE from user_settings where setting_name = ? ", $paras);
+        }else {
 
+            $this->plugin->updateSetting(CONTEXT_SITE, 'roleids', $this->getData('roleids'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'maxusers', $this->getData('maxusers'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'mergeusername', $this->getData('mergeusername'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'daysmail', $this->getData('daysmail'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'daysmerged', $this->getData('daysmerged'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'test', $this->getData('test'));
+            $this->plugin->updateSetting(CONTEXT_SITE, 'testemails', $this->getData('testemails'));
+            // Tell the user that the save was successful.
+            import('classes.notification.NotificationManager');
+            $notificationMgr = new NotificationManager();
+            $notificationMgr->createTrivialNotification(
+                Application::get()->getRequest()->getUser()->getId(),
+                NOTIFICATION_TYPE_SUCCESS,
+                ['contents' => __('common.changesSaved')]
+            );
+        }
 		return parent::execute();
 	}
 }

@@ -28,3 +28,9 @@ msgstr "Semicolon separated string of emails to be sent to when testing is enabl
 
 msgid "plugins.generic.rdluser.test"
 msgstr "If activated, confirm membership emails are sent to emails in the field below"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted.submit"
+msgstr "Remove"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted"
+msgstr "Users we cannot automatically delete are marked in user-settings, press this button to remove the marks"

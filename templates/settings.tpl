@@ -1,15 +1,11 @@
+<div id="confirmMembershipSettings">
 <script>
 	$(function() {ldelim}
 		$('#confirmMembershipPluginSettings').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
 		{rdelim});
 </script>
 
-<form
-		class="pkp_form"
-		id="confirmMembershipPluginSettings"
-		method="POST"
-		action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="settings" save=true}"
->
+<form class="pkp_form" id="confirmMembershipPluginSettings" method="POST"  action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="settings" save=true}">
 	{csrf}
 
 	{fbvFormArea}
@@ -36,11 +32,21 @@
 		{assign var="checked" value=false}
 	{/if}
 
-			{fbvElement	type="checkbox" id="test" value="1" checked=$checked  label="plugins.generic.rdluser.test" }
+			{fbvElement	type="checkbox" id="test" value="1" checked=$checked  label="plugins.generic.confirmmembership.test" }
 		{/fbvFormSection}
 		{fbvFormSection}
-			{fbvElement type="text" id="testemails" value=$testemails label="plugins.generic.rdluser.testemails" }
+			{fbvElement type="text" id="testemails" value=$testemails label="plugins.generic.confirmmembership.testemails" }
 	    {/fbvFormSection}
 	{/fbvFormArea}
 	{fbvFormButtons submitText="common.save"}
+	<script>
+		function resetCanNotDeleteClick() {
+			$form = $('#confirmMembershipSettings form');
+			$form.append('<input type="hidden" name="delecteUserSetting" value="true" />');
+			return true;
+		}
+	</script>
+	<input type="submit" name="resetnotdeleted" value="{translate key="plugins.generic.confirmmembership.resetusernotdeleted.submit"}" onclick="resetCanNotDeleteClick()" class="action" />
+	<p>{translate key="plugins.generic.confirmmembership.resetusernotdeleted"}</p><br/>
 </form>
+</div>

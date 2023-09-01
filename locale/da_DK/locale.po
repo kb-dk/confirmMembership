@@ -22,8 +22,14 @@ msgstr "ConfirmMembershipTask"
 msgid "plugins.generic.confirmmembership.mergeusername"
 msgstr "Brugernavn på den bruger de delete brugere skal flettes ind i"
 
-msgid "plugins.generic.rdluser.testemails"
+msgid "plugins.generic.confirmmembership.testemails"
 msgstr "Semikolonsepareret streng af mails der skal sendes til når test er slået til"
 
-msgid "plugins.generic.rdluser.test"
+msgid "plugins.generic.confirmmembership.test"
 msgstr "Hvis aktiveret sendes bekræft medlemskab mails til emails i nedenstående felt"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted.submit"
+msgstr "Fjern"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted"
+msgstr "Brugere vi ikke automatisk kan slette, bliver markeret i user-settings, tryk på denne knap for at fjerne markeringen"

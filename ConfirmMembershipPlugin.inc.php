@@ -11,7 +11,8 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
-
+define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
+define("SETTING_MEMBERSHIP_MAIL_SEND", "confirmmembershipmailsend");
 class ConfirmMembershipPlugin extends GenericPlugin {
     /**
      * @copydoc Plugin::register()
