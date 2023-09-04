@@ -36,13 +36,12 @@ class ConfirmMembershipTask extends ScheduledTask {
         $roleIds = explode(',', $pluginSettings->getSetting(CONTEXT_SITE, 'roleids'));
         $mergesUserId = $userDao->getByUsername($pluginSettings->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
         $timestamp = new DateTime(Core::getCurrentDate());
-        $timestamp->modify('-' . $daysmerged . ' day');
+        $timestamp->modify('-' . $daysmerged . ' day ');
         $paras = [Core::getCurrentDate(), $mergesUserId,  $maxusers];
         $result =  $userDao->retrieve("select user_id from users user_settings WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0 
        and user_id != ? order by RANDOM() LIMIT ? ",
         $paras);
-        $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
-        $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
+
         foreach ($result as $userId) {
             $memberJournals = [];
             $user = $userDao->getById($userId->user_id);
@@ -51,61 +50,75 @@ class ConfirmMembershipTask extends ScheduledTask {
             if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) && $timestamp < new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND)) || $user->getData(SETTING_CAN_NOT_DELETE)) {
                 continue;
             } else if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) && $timestamp > new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND))) {
-                $this->userAction = new UserAction();
-                $userAction = $this->userAction;
-                $userAction->mergeUsers($user->getId(), $mergesUserId);
+                $this->mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId);
                 continue;
             }
-            $userCantBeDeleted = false;
-            if ($this->userHasReviews($user->getId()) || $this->userHasSubmission($user->getId())) {
-                $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
-                continue;
-            }
+
             $journals = $journalDao->getAll();
             // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
             while ($journal = $journals->next()) {
-                if ($subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
-                    $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
-                    break;
-                }
                 foreach ($user->getRoles($journal->getId()) as $role) {
-                    if (!in_array($role->getId(), $roleIds)) {
-                        $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
-                        break;
-                    }
                     $memberJournals[] = $journal->getName($journal->getPrimaryLocale());
                 }
             }
-            if (!$userCantBeDeleted) {
-                $journalsNames = '';
-                if (!empty($memberJournals)) {
-                    $journalsNames = implode(', ', $memberJournals);
-                    $mail = new MailTemplate('COMFIRMMEMBERSHIP_MEMBERSHIP', 'en_US');
+            $journalsNames = '';
+            if (!empty($memberJournals)) {
+                $journalsNames = implode(', ', $memberJournals);
+                $mail = new MailTemplate('COMFIRMMEMBERSHIP_MEMBERSHIP', 'en_US');
+            }
+            else {
+                $mail = new MailTemplate('COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP', 'en_US');
+            }
+            if ($pluginSettings->getSetting(CONTEXT_SITE, 'test')) {
+                $testmails = explode(';', $pluginSettings->getSetting(CONTEXT_SITE, 'testemails'));
+                foreach ($testmails as $testmail) {
+                    $mail->addRecipient($testmail);
                 }
-                else {
-                    $mail = new MailTemplate('COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP', 'en_US');
-                }
-                if ($pluginSettings->getSetting(CONTEXT_SITE, 'test')) {
-                    $testmails = explode(';', $pluginSettings->getSetting(CONTEXT_SITE, 'testemails'));
-                    foreach ($testmails as $testmail) {
-                        $mail->addRecipient($testmail);
-                    }
-                } else {
-                    $mail->addRecipient($user->getEmail(), $user->getFullName());
-                }
-                $mail->assignParams([
-                    'fullname' => $user->getFullName(),
-                    'journal' => $journalsNames,
-                ]);
-                 if ($mail->send()) {
-                    $user->updateSetting(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate(), 'Date', 0);
+            } else {
+                $mail->addRecipient($user->getEmail(), $user->getFullName());
+            }
+            $mail->assignParams([
+                'fullname' => $user->getFullName(),
+                'journal' => $journalsNames,
+            ]);
+           if ($mail->send()) {
+               dump('mail send to ' . $user->getId());
+                $user->updateSetting(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate(), 'Date', 0);
+           }
+        }
+    }
+
+    private function mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId) {
+        $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
+        $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
+        $userCantBeDeleted = false;
+        if ($this->userHasReviews($user->getId()) || $this->userHasSubmission($user->getId())) {
+            $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
+           return;
+        }
+        $journals = $journalDao->getAll();
+        // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
+        while ($journal = $journals->next()) {
+            if ($subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
+                $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
+                break;
+            }
+            foreach ($user->getRoles($journal->getId()) as $role) {
+                if (!in_array($role->getId(), $roleIds)) {
+                    $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
+                    return;
                 }
             }
         }
+        $this->userAction = new UserAction();
+        $userAction = $this->userAction;
+        $userAction->mergeUsers($user->getId(), $mergesUserId);
+        dump('user meged' . $user->getId());
     }
     private function userCantBeDeleted (&$user, $userDao) {
         $user->updateSetting(SETTING_CAN_NOT_DELETE, true, 'bool', 0);
         $userDao->updateObject($user);
+        dump('user meged cant be deleted ' . $user->getId());
         return true;
     }
     private function userHasReviews($userId) {
