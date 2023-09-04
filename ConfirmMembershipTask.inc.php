@@ -36,7 +36,7 @@ class ConfirmMembershipTask extends ScheduledTask {
         $roleIds = explode(',', $pluginSettings->getSetting(CONTEXT_SITE, 'roleids'));
         $mergesUserId = $userDao->getByUsername($pluginSettings->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
         $timestamp = new DateTime(Core::getCurrentDate());
-        $timestamp->modify('-' . $daysmerged . ' day ');
+        $timestamp->modify('-' . $daysmerged . ' day');
         $paras = [Core::getCurrentDate(), $mergesUserId,  $maxusers];
         $result =  $userDao->retrieve("select user_id from users user_settings WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0 
        and user_id != ? order by RANDOM() LIMIT ? ",
