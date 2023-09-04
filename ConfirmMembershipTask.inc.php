@@ -56,9 +56,11 @@ class ConfirmMembershipTask extends ScheduledTask {
 
             $journals = $journalDao->getAll();
             // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
+            $memberJournals = [];
             while ($journal = $journals->next()) {
                 foreach ($user->getRoles($journal->getId()) as $role) {
                     $memberJournals[] = $journal->getName($journal->getPrimaryLocale());
+                    break;
                 }
             }
             $journalsNames = '';
