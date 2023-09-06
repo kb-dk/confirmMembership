@@ -103,7 +103,7 @@ class ConfirmMembershipTask extends ScheduledTask {
         while ($journal = $journals->next()) {
             if ($subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
                 $userCantBeDeleted = $this->userCantBeDeleted($user, $userDao);
-                break;
+                return;
             }
             foreach ($user->getRoles($journal->getId()) as $role) {
                 if (!in_array($role->getId(), $roleIds)) {
