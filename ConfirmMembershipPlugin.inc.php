@@ -5,23 +5,37 @@
  *
  *
  * @class ConfirmMembershipPlugin
- * @ingroup plugins_generic_confirmmembership
+ * @ingroup plugin_name
  *
  * @brief confirmmembership plugin class
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
-define("SETTING_MEMBERSHIP_MAIL_SEND", "confirmmembershipmailsend");
+define('SETTING_MEMBERSHIP_MAIL_SEND', 'confirmmembershipmailsend');
 class ConfirmMembershipPlugin extends GenericPlugin {
+    var $injected = false;
     /**
      * @copydoc Plugin::register()
      */
     function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
-
-        HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
+        error_log('jjejje');
+        if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE')) return true;
+        if ($success && $this->getEnabled()) {
+            HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
+            HookRegistry::register('LoadHandler', array($this, 'setPageHandler'));
+            HookRegistry::register('TemplateManager::display', array($this, 'displayTemplateHookUser'));
+        }
         return $success;
+    }
+    public function setPageHandler($hookName, $params) {
+        if ($params[0] === 'deleteusers') {
+            $this->import('ConfirmMembershipPluginHandler');
+            define('HANDLER_CLASS', 'ConfirmMembershipPluginHandler');
+            return true;
+        }
+        return false;
     }
     function setEnabled($enabled) {
         if ($enabled) {
@@ -32,12 +46,11 @@ class ConfirmMembershipPlugin extends GenericPlugin {
             $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
             $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP');
         }
+
       parent::setEnabled($enabled);
 
     }
-    function getInstallSitePluginSettingsFile() {
-        return $this->getPluginPath() . '/settings.xml';
-    }
+
     function getInstallEmailTemplatesFile() {
         return ($this->getPluginPath() . DIRECTORY_SEPARATOR . 'emailTemplates.xml');
     }
@@ -151,6 +164,29 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                 }
         }
         return parent::manage($args, $request);
+    }
+
+    public function getUsers()
+    {
+    error_log('majabaja', 0);
+        return 'majasss';
+    }
+    public function display($args, $request) {
+        parent::display($args, $request);
+        error_log('display in Confirmmembership plugin', 0);
+        error_log(print_r($args, true));
+
+    }
+    function displayTemplateHookUser($hookName, $params) {
+        error_log('displayTemplateHook');
+       // error_log(print_r($params[0], true));
+        if (!$this->injected) {
+            $this->injected = true;
+            $templateMgr =& $params[0];
+
+            $templateMgr->display($this->getTemplateResource('searchuser.tpl'));
+        }
+        return false;
     }
 }
 

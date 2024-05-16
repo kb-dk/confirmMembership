@@ -24,7 +24,8 @@
 		{fbvFormSection}
 			{fbvElement type="text" id="mergeusername" value=$mergeusername label="plugins.generic.confirmmembership.mergeusername" }
 		{/fbvFormSection}
-		{fbvFormSection list="true"}
+
+	{fbvFormSection list="true"}
 
 	{if $test}
 		{assign var="checked" value=true}
@@ -37,6 +38,9 @@
 		{fbvFormSection}
 			{fbvElement type="text" id="testemails" value=$testemails label="plugins.generic.confirmmembership.testemails" }
 	    {/fbvFormSection}
+	{fbvFormSection}
+	{fbvElement type="text" id="amountofusers" value=$amountofusers label="plugins.generic.confirmmembership.amountofusers" }
+	{/fbvFormSection}
 	{/fbvFormArea}
 	{fbvFormButtons submitText="common.save"}
 	<script>

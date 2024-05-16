@@ -32,5 +32,50 @@ msgstr "If activated, confirm membership emails are sent to emails in the field 
 msgid "plugins.generic.confirmmembership.resetusernotdeleted.submit"
 msgstr "Remove"
 
+msgid "plugins.generic.confirmmembership.users"
+msgstr "User"
+
+msgid "plugins.generic.confirmmembership.amountofusers"
+msgstr "amount of users"
+
 msgid "plugins.generic.confirmmembership.resetusernotdeleted"
 msgstr "Users we cannot automatically delete are marked in user-settings, press this button to remove the marks"
+
+msgid "plugins.generic.confirmmembership.mergeuserpopup"
+msgstr "Are you sure you want to merge this user {$merge_user}"
+
+msgid "plugins.generic.confirmmembership.amountofusers"
+msgstr "amount of users :{$total}"
+
+msgid "plugins.generic.confirmmembership.pagetitle"
+msgstr "Manual deletion of users"
+
+msgid "plugins.generic.confirmmembership.next"
+msgstr "Next >>"
+
+msgid "plugins.generic.confirmmembership.previous"
+msgstr "Previous <<"
+
+msgid "plugins.generic.confirmmembership.name"
+msgstr "Name"
+
+msgid "plugins.generic.confirmmembership.email"
+msgstr "Email"
+
+msgid "plugins.generic.confirmmembership.role"
+msgstr "Role"
+
+msgid "plugins.generic.confirmmembership.assignment"
+msgstr "Assignment"
+
+msgid "plugins.generic.confirmmembership.journals"
+msgstr "Journals"
+
+msgid "plugins.generic.confirmmembership.subscriber"
+msgstr "Supscriber"
+
+msgid "plugins.generic.confirmmembership.link"
+msgstr "Link"
+
+msgid "plugins.generic.confirmmembership.merges"
+msgstr "Merges"
