@@ -121,14 +121,6 @@ class ConfirmMembershipPluginHandler extends  Handler
         }
         return $review;
      }
-//    protected function findAssignment($userId) {
-//        $assigment = [];
-//        $checkUserSubmissions = $this->stageAssignmentDao->retrieve("select submissions.submission_id, path from journals join submissions on submissions.context_id = journals.journal_id join stage_assignments on submissions.submission_id = stage_assignments.submission_id and user_id= ?", [$userId]);
-//        foreach ($checkUserSubmissions as $submission) {
-//            $assigment[] =  '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1';;
-//        }
-//        return $assigment;
-//    }
 
     private function getUsersToDelete($next) {
         $roleNames = Application::getRoleNames();
@@ -173,6 +165,11 @@ class ConfirmMembershipPluginHandler extends  Handler
                 $deletUser['email'] = $user->getEmail();
                 $deletUser['role'] = '';
                 $deletUser['link'] = '';
+                if ($this->subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $this->instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
+                    $deletUser['subscriber'] = true;
+                } else {
+                    $deletUser['subscriber'] = false;
+                }
                 $deletUser['userid'] = $user->getId();
                 $deletUsers[] = $deletUser;
             }
