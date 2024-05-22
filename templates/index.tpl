@@ -24,9 +24,8 @@
                 <th>{translate key="plugins.generic.confirmmembership.assignment"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.journals"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.subscriber"}</th>
-                <th ></th>
-
                 <th class="">{translate key="plugins.generic.confirmmembership.link"}</th>
+                <th ></th>
             </tr>
         </thead>
         <tbody>
@@ -49,7 +48,9 @@
                     {/if}
                 </td>
                 <td>
-                    <a href="{$user['link']}" target="_blank">{translate key="plugins.generic.confirmmembership.link"}</a>
+                    {if $user['link'] }
+                        <a href="{$user['link']}" target="_blank">{translate key="plugins.generic.confirmmembership.link"}</a>
+                    {/if}
                 </td>
                  <td>
                      <form class="pkp_form" id="mergesUser_{$user['userid']} " onSubmit="return confirm('{$mergesUser}')" method="post" action="{url}"> {fbvElement type="hidden" id="userid" value={$user['userid']}}{fbvElement type="submit"  label="plugins.generic.confirmmembership.merges" id="suggestUsernameButton" inline=true class="default"}

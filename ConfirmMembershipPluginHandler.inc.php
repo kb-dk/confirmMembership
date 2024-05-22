@@ -65,7 +65,6 @@ class ConfirmMembershipPluginHandler extends  Handler
     }
 
     public function index($args, $request) {
-        error_log(print_r($request->_requestVars, true));
         $amountOfUsers = $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         if (isset($request->_requestVars['next'])) {
             $next = $amountOfUsers + ($request->_requestVars['next']);
@@ -133,10 +132,13 @@ class ConfirmMembershipPluginHandler extends  Handler
             $user = $this->userDao->getById($userId->user_id);
             $deletUser = [];
             $journals = $this->journalDao->getAll();
+
             while ($journal = $journals->next()) {
+
                 $memberJournals = NULL;
                 $roles = [];
                 foreach ($user->getRoles($journal->getId()) as $role) {
+
                     $memberJournals =  $journal->getName($journal->getPrimaryLocale());
                     $roles[] = __($roleNames[$role->getRoleId()]);
                 }
@@ -165,11 +167,6 @@ class ConfirmMembershipPluginHandler extends  Handler
                 $deletUser['email'] = $user->getEmail();
                 $deletUser['role'] = '';
                 $deletUser['link'] = '';
-                if ($this->subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $this->instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
-                    $deletUser['subscriber'] = true;
-                } else {
-                    $deletUser['subscriber'] = false;
-                }
                 $deletUser['userid'] = $user->getId();
                 $deletUsers[] = $deletUser;
             }

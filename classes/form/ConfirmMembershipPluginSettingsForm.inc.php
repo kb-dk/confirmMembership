@@ -78,9 +78,12 @@ class ConfirmMembershipPluginSettingsForm extends Form {
 	public function execute(...$functionArgs) {
         $returner = parent::execute(...$functionArgs);
         $request = Application::get()->getRequest();
-        error_log('execute');
         $values = $request->getUserVars();
-
+        if (isset($values['delecteUserSetting'])) {
+            $userSettingsDao = DAORegistry::getDAO('UserSettingsDAO'); /* @var $userSettingsDao UserSettingsDAO */
+            $paras = [SETTING_CAN_NOT_DELETE];
+            $result =  $userSettingsDao->update("DELETE from user_settings where setting_name = ? ", $paras);
+        }else {
             $this->plugin->updateSetting(CONTEXT_SITE, 'roleids', $this->getData('roleids'));
             $this->plugin->updateSetting(CONTEXT_SITE, 'maxusers', $this->getData('maxusers'));
             $this->plugin->updateSetting(CONTEXT_SITE, 'mergeusername', $this->getData('mergeusername'));
@@ -89,7 +92,6 @@ class ConfirmMembershipPluginSettingsForm extends Form {
             $this->plugin->updateSetting(CONTEXT_SITE, 'test', $this->getData('test'));
             $this->plugin->updateSetting(CONTEXT_SITE, 'testemails', $this->getData('testemails'));
             $this->plugin->updateSetting(CONTEXT_SITE, 'amountofusers', $this->getData('amountofusers'));
-            // Tell the user that the save was successful.
             import('classes.notification.NotificationManager');
             $notificationMgr = new NotificationManager();
             $notificationMgr->createTrivialNotification(
@@ -97,7 +99,7 @@ class ConfirmMembershipPluginSettingsForm extends Form {
                 NOTIFICATION_TYPE_SUCCESS,
                 ['contents' => __('common.changesSaved')]
             );
-
+        }
 		return parent::execute();
 	}
 }

@@ -44,6 +44,9 @@ msgstr "Users we cannot automatically delete are marked in user-settings, press 
 msgid "plugins.generic.confirmmembership.mergeuserpopup"
 msgstr "Are you sure you want to merge this user {$merge_user}"
 
+msgid "plugins.generic.confirmmembership.total"
+msgstr "number of users deleteuser page will display at a time"
+
 msgid "plugins.generic.confirmmembership.amountofusers"
 msgstr "amount of users :{$total}"
 
@@ -75,7 +78,10 @@ msgid "plugins.generic.confirmmembership.subscriber"
 msgstr "Supscriber"
 
 msgid "plugins.generic.confirmmembership.link"
-msgstr "Link"
+msgstr "Link to user"
 
 msgid "plugins.generic.confirmmembership.merges"
 msgstr "Merges"
+
+msgid "plugins.generic.confirmmembership.deleteuserlink"
+msgstr "Page with list of users who cannot automatically delete"
