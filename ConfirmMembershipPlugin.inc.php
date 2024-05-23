@@ -12,15 +12,19 @@
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
-define("SETTING_MEMBERSHIP_MAIL_SEND", "confirmmembershipmailsend");
+define('SETTING_MEMBERSHIP_MAIL_SEND', 'confirmmembershipmailsend');
 class ConfirmMembershipPlugin extends GenericPlugin {
+    var $injected = false;
     /**
      * @copydoc Plugin::register()
      */
     function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
-
-        HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
+        if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE')) return true;
+        if ($success && $this->getEnabled()) {
+            HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
+            HookRegistry::register('LoadHandler', array($this, 'setPageHandler'));
+        }
         return $success;
     }
     function setEnabled($enabled) {
@@ -50,9 +54,7 @@ class ConfirmMembershipPlugin extends GenericPlugin {
      * @return bolean
      */
     function callbackParseCronTab($hookName, $args) {
-        error_log('callbackParseCronTab 1');
         if ($this->getEnabled() || !Config::getVar('general', 'installed')) {
-            error_log('callbackParseCronTab');
             $taskFilesPath =& $args[0];
             $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
         }
@@ -151,6 +153,15 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                 }
         }
         return parent::manage($args, $request);
+    }
+
+    public function setPageHandler($hookName, $params) {
+        if ($params[0] === 'deleteusers') {
+            $this->import('ConfirmMembershipPluginHandler');
+            define('HANDLER_CLASS', 'ConfirmMembershipPluginHandler');
+            return true;
+        }
+        return false;
     }
 }
 

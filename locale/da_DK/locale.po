@@ -33,3 +33,48 @@ msgstr "Fjern"
 
 msgid "plugins.generic.confirmmembership.resetusernotdeleted"
 msgstr "Brugere vi ikke automatisk kan slette, bliver markeret i user-settings, tryk på denne knap for at fjerne markeringen"
+
+msgid "plugins.generic.confirmmembership.users"
+msgstr "User"
+
+msgid "plugins.generic.confirmmembership.amountofusers"
+msgstr "Antal brugere deleuser skal vise af gangen"
+
+msgid "plugins.generic.confirmmembership.total"
+msgstr "Antal brugere :{$total}"
+
+msgid "plugins.generic.confirmmembership.pagetitle"
+msgstr "Manuel sletning af brugere"
+
+msgid "plugins.generic.confirmmembership.next"
+msgstr "Næste >>"
+
+msgid "plugins.generic.confirmmembership.previous"
+msgstr "Tilbage <<"
+
+msgid "plugins.generic.confirmmembership.name"
+msgstr "Navn"
+
+msgid "plugins.generic.confirmmembership.email"
+msgstr "Email"
+
+msgid "plugins.generic.confirmmembership.role"
+msgstr "Rolle"
+
+msgid "plugins.generic.confirmmembership.assignment"
+msgstr "Opgave"
+
+msgid "plugins.generic.confirmmembership.journals"
+msgstr "Tidsskrift"
+
+msgid "plugins.generic.confirmmembership.subscriber"
+msgstr "Abonnent"
+
+msgid "plugins.generic.confirmmembership.link"
+msgstr "Link til bruger"
+
+msgid "plugins.generic.confirmmembership.merges"
+msgstr "Flet"
+
+msgid "plugins.generic.confirmmembership.deleteuserlink"
+msgstr "Side med liste over brugere der ikke automatisk kan slette"
