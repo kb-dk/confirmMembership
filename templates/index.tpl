@@ -14,7 +14,7 @@
     <h1 class="app__pageHeading">
         {translate key="plugins.generic.confirmmembership.pagetitle"}
     </h1>
-    <div><p>{translate key="plugins.generic.confirmmembership.amountofusers" total=$total}</p></div>
+    <div><p>{translate key="plugins.generic.confirmmembership.total" total=$total}</p></div>
     <table id="confirmmebership"  class="table stripe dataTable">
         <thead>
             <tr>
