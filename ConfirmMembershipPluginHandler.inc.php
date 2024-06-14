@@ -66,6 +66,20 @@ class ConfirmMembershipPluginHandler extends  Handler
 
     public function index($args, $request) {
         $amountOfUsers = $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
+        if (isset($request->_requestVars['userid'])) {
+            if (isset($request->_requestVars['previous']) || ($request->_requestVars['next'])) {
+                $next = isset($request->_requestVars['next']) ? $request->_requestVars['next']: $request->_requestVars['previous'];
+            }
+            else {
+                $next = $amountOfUsers;
+            }
+
+            $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+            $mergesUserId = $userDao->getByUsername($this->plugin->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
+            $userAction = new UserAction();
+            $userAction->mergeUsers($request->_requestVars['userid'], $mergesUserId);
+            $users = $this->getUsersToDelete($next);
+        }
         if (isset($request->_requestVars['next'])) {
             $next = $amountOfUsers + ($request->_requestVars['next']);
         }
@@ -75,13 +89,8 @@ class ConfirmMembershipPluginHandler extends  Handler
         else {
             $next = $amountOfUsers;
         }
-        $users = $this->getUsersToDelete($next);
-
-        if (isset($request->_requestVars['userid'])) {
-            $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-            $mergesUserId = $userDao->getByUsername($this->plugin->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
-            $userAction = new UserAction();
-            $userAction->mergeUsers($request->_requestVars['userid'], $mergesUserId);
+        if (!isset($request->_requestVars['userid'])) {
+            $users = $this->getUsersToDelete($next);
         }
 
         $this->templateMgr->setupBackendPage();
@@ -104,19 +113,23 @@ class ConfirmMembershipPluginHandler extends  Handler
     }
 
     protected function findAssignment($userId) {
-        $assignment = [];
-          $checkUserSubmissions = $this->stageAssignmentDao->retrieve("select submissions.submission_id, path from journals join submissions on submissions.context_id = journals.journal_id join stage_assignments on submissions.submission_id = stage_assignments.submission_id and user_id= ?", [$userId]);
+        $review = [];
+          $checkUserSubmissions = $this->stageAssignmentDao->retrieve("select submissions.submission_id, path, last_modified::date from journals join submissions on submissions.context_id = journals.journal_id join stage_assignments on submissions.submission_id = stage_assignments.submission_id and user_id= ?", [$userId]);
         foreach ($checkUserSubmissions as $submission) {
-            $assigment[] =  '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1';;
+            $review[] = [
+                'url' => '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1',
+                'date' => $submission->last_modified,
+                'review' => false
+            ];
         }
-        if (!empty($assignment)) {
-            $review = $assignment;
-        } else {
-            $review = [];
-        }
-        $checkUserSubmissions = $this->stageAssignmentDao->retrieve("select submissions.submission_id, path from journals join submissions on submissions.context_id = journals.journal_id join review_assignments on submissions.submission_id = review_assignments.submission_id and reviewer_id= ?",  [$userId]);
+        $checkUserSubmissions = $this->stageAssignmentDao->retrieve("select submissions.submission_id, path , review_assignments.last_modified::date  from journals join submissions on submissions.context_id = journals.journal_id join review_assignments on submissions.submission_id = review_assignments.submission_id and reviewer_id= ?",  [$userId]);
         foreach ($checkUserSubmissions as $submission) {
-            $review[] = '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1';
+            $review[] = [
+                'url' => '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1',
+                'date' => $submission->last_modified,
+                'review' => true
+            ];
+
         }
         return $review;
      }
@@ -125,7 +138,7 @@ class ConfirmMembershipPluginHandler extends  Handler
         $roleNames = Application::getRoleNames();
         $amountOfUsers = $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         $offset = $next === $amountOfUsers? 0 : ($next - $amountOfUsers);
-        $result = $this->userSettingsDao->retrieve("select user_id from user_settings WHERE setting_name = ? LIMIT ? OFFSET ? ",
+        $result = $this->userSettingsDao->retrieve("select user_settings.user_id from user_settings join users on users.user_id=user_settings.user_id WHERE setting_name = ?  order by date_registered  LIMIT ? OFFSET ?",
         [SETTING_CAN_NOT_DELETE, $amountOfUsers, $offset]);
         $deletUsers = [];
         foreach ($result as $userId) {
@@ -150,11 +163,12 @@ class ConfirmMembershipPluginHandler extends  Handler
                     }
                     $deletUser['journals'] = $memberJournals;
                     $deletUser['name'] = $user->getFullName();
+                    $deletUser['username'] = $user->getUsername();
                     $deletUser['email'] = $user->getEmail();
                     $deletUser['userid'] = $user->getId();
                     $deletUser['role'] = implode(', ', $roles);
                     $deletUser['journals'] = $memberJournals;
-                    $deletUser['link'] = '/index.php/' . $journal->getPath() . '/management/settings/access?email=' .  $user->getEmail();
+                    $deletUser['link'] = '/index.php/' . $journal->getPath() . '/management/settings/access';
                     $deletUser['assignment'] = $this->findAssignment($user->getId());
                     $deletUsers[] = $deletUser;
                 }
@@ -164,6 +178,7 @@ class ConfirmMembershipPluginHandler extends  Handler
                 $deletUser['subscriber'] = false;
                 $deletUser['assignment'] = $this->findAssignment($user->getId());
                 $deletUser['name'] = $user->getFullName();
+                $deletUser['username'] = $user->getUsername();
                 $deletUser['email'] = $user->getEmail();
                 $deletUser['role'] = '';
                 $deletUser['link'] = '';

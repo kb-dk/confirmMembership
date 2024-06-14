@@ -55,6 +55,9 @@ msgstr "Tilbage <<"
 msgid "plugins.generic.confirmmembership.name"
 msgstr "Navn"
 
+msgid "plugins.generic.confirmmembership.username"
+msgstr "Bruger navn"
+
 msgid "plugins.generic.confirmmembership.email"
 msgstr "Email"
 
@@ -75,6 +78,9 @@ msgstr "Link til bruger"
 
 msgid "plugins.generic.confirmmembership.merges"
 msgstr "Flet"
+
+msgid "plugins.generic.confirmmembership.review"
+msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Side med liste over brugere der ikke automatisk kan slette"

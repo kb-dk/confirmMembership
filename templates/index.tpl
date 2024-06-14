@@ -11,6 +11,7 @@
             });
         } );
     </script>
+
     <h1 class="app__pageHeading">
         {translate key="plugins.generic.confirmmembership.pagetitle"}
     </h1>
@@ -19,9 +20,10 @@
         <thead>
             <tr>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.name"}</th>
+                <th class="sorting">{translate key="plugins.generic.confirmmembership.username"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.email"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.role"}</th>
-                <th>{translate key="plugins.generic.confirmmembership.assignment"}</th>
+                <th style="min-width: 400px;">{translate key="plugins.generic.confirmmembership.assignment"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.journals"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.subscriber"}</th>
                 <th class="">{translate key="plugins.generic.confirmmembership.link"}</th>
@@ -32,12 +34,20 @@
          {foreach from=$users item="user"}
             <tr>
                 <td>{$user['name']}</td>
+                <td>{$user['username']}</td>
                 <td>{$user['email']}</td>
                 <td>{$user['role']}</td>
                 <td>
                     {if !empty($user['assignment'])}
-                        {foreach $user['assignment'] as $link}
-                          <a href="{$link}" target="_blank">{translate key="plugins.generic.confirmmembership.assignment"}</a>
+                        {foreach $user['assignment'] as $ass}
+                          <a href="{$ass['url']}" target="_blank">
+                             {$ass['date']}
+
+                          </a>
+                            {if $ass['review'] }
+                                <span>{translate key="plugins.generic.confirmmembership.review"}</span>
+                            {/if}
+                            &nbsp;
                         {/foreach}
                     {/if}
                 </td>
@@ -53,7 +63,7 @@
                     {/if}
                 </td>
                  <td>
-                     <form class="pkp_form" id="mergesUser_{$user['userid']} " onSubmit="return confirm('{$mergesUser}')" method="post" action="{url}"> {fbvElement type="hidden" id="userid" value={$user['userid']}}{fbvElement type="submit"  label="plugins.generic.confirmmembership.merges" id="suggestUsernameButton" inline=true class="default"}
+                     <form class="pkp_form" id="mergesUser_{$user['userid']} " onSubmit="return confirm('{$mergesUser}')" method="post" action="{{$smarty.server.REQUEST_URI}}"> {fbvElement type="hidden" id="userid" value={$user['userid']}}{fbvElement type="submit"  label="plugins.generic.confirmmembership.merges" id="suggestUsernameButton" inline=true class="default"}
                      </form>
                  </td>
             </tr>
