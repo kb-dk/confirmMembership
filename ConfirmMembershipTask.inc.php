@@ -136,7 +136,7 @@ class ConfirmMembershipTask extends ScheduledTask {
     }
     private function userHasSubmission($userId) {
         $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*)  AS row_count from stage_assignments where user_id ?", [$userId]); //DB::table('stage_assignments')->where('user_id', $userId);
+        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*)  AS row_count from stage_assignments where user_id = ?", [$userId]); //DB::table('stage_assignments')->where('user_id', $userId);
         $current = $checkUserSubmissions->current();
         $row = $current;
         return $row ? (boolean) $row->row_count : false;

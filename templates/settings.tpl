@@ -53,4 +53,5 @@
 	<input type="submit" name="resetnotdeleted" value="{translate key="plugins.generic.confirmmembership.resetusernotdeleted.submit"}" onclick="resetCanNotDeleteClick()" class="action" />
 	<p>{translate key="plugins.generic.confirmmembership.resetusernotdeleted"}</p><br/>
 </form>
+	<a href="/index.php/index/deleteusers">{translate key="plugins.generic.confirmmembership.deleteuserlink"}</a>
 </div>
