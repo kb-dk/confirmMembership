@@ -138,8 +138,8 @@ class ConfirmMembershipPluginHandler extends  Handler
         $roleNames = Application::getRoleNames();
         $amountOfUsers = $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         $offset = $next === $amountOfUsers? 0 : ($next - $amountOfUsers);
-        $result = $this->userSettingsDao->retrieve("select user_settings.user_id from user_settings join users on users.user_id=user_settings.user_id WHERE setting_name = ?  order by date_registered  LIMIT ? OFFSET ?",
-        [SETTING_CAN_NOT_DELETE, $amountOfUsers, $offset]);
+        $result = $this->userSettingsDao->retrieve("select user_settings.user_id from user_settings join users on users.user_id=user_settings.user_id  where setting_name=? and user_settings.user_id in (select user_id from user_settings where setting_name=?) order by setting_value DESC LIMIT ? OFFSET ?",
+        [SETTING_MEMBERSHIP_MAIL_SEND, SETTING_CAN_NOT_DELETE, $amountOfUsers, $offset]);
         $deletUsers = [];
         foreach ($result as $userId) {
             $user = $this->userDao->getById($userId->user_id);
@@ -170,6 +170,7 @@ class ConfirmMembershipPluginHandler extends  Handler
                     $deletUser['journals'] = $memberJournals;
                     $deletUser['link'] = '/index.php/' . $journal->getPath() . '/management/settings/access';
                     $deletUser['assignment'] = $this->findAssignment($user->getId());
+                    $deletUser['date'] = $user->getData(SETTING_MEMBERSHIP_MAIL_SEND);
                     $deletUsers[] = $deletUser;
                 }
             }
@@ -183,6 +184,7 @@ class ConfirmMembershipPluginHandler extends  Handler
                 $deletUser['role'] = '';
                 $deletUser['link'] = '';
                 $deletUser['userid'] = $user->getId();
+                $deletUser['date'] = $user->getData(SETTING_MEMBERSHIP_MAIL_SEND);
                 $deletUsers[] = $deletUser;
             }
         }

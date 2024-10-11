@@ -19,6 +19,7 @@
     <table id="confirmmebership"  class="table stripe dataTable">
         <thead>
             <tr>
+                <th class="sorting">{translate key="plugins.generic.confirmmembership.date"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.name"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.username"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.email"}</th>
@@ -33,6 +34,7 @@
         <tbody>
          {foreach from=$users item="user"}
             <tr>
+                <td>{$user['date']}</td>
                 <td>{$user['name']}</td>
                 <td>{$user['username']}</td>
                 <td>{$user['email']}</td>
