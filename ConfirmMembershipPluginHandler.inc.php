@@ -67,18 +67,13 @@ class ConfirmMembershipPluginHandler extends  Handler
     public function index($args, $request) {
         $amountOfUsers = $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         if (isset($request->_requestVars['userid'])) {
-            if (isset($request->_requestVars['previous']) || ($request->_requestVars['next'])) {
-                $next = isset($request->_requestVars['next']) ? $request->_requestVars['next']: $request->_requestVars['previous'];
-            }
-            else {
-                $next = $amountOfUsers;
-            }
 
             $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
             $mergesUserId = $userDao->getByUsername($this->plugin->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
             $userAction = new UserAction();
+
             $userAction->mergeUsers($request->_requestVars['userid'], $mergesUserId);
-            $users = $this->getUsersToDelete($next);
+
         }
         if (isset($request->_requestVars['next'])) {
             $next = $amountOfUsers + ($request->_requestVars['next']);
@@ -89,12 +84,9 @@ class ConfirmMembershipPluginHandler extends  Handler
         else {
             $next = $amountOfUsers;
         }
-        if (!isset($request->_requestVars['userid'])) {
-            $users = $this->getUsersToDelete($next);
-        }
 
+        $users = $this->getUsersToDelete($next);
         $this->templateMgr->setupBackendPage();
-
         $this->templateMgr->assign([
             'total' => $this->getTotalCount(),
             'users' => $users,
