@@ -59,6 +59,9 @@ msgstr "Next >>"
 msgid "plugins.generic.confirmmembership.previous"
 msgstr "Previous <<"
 
+msgid "plugins.generic.confirmmembership.date"
+msgstr "Date"
+
 msgid "plugins.generic.confirmmembership.name"
 msgstr "Name"
 

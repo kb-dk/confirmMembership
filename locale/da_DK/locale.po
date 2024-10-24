@@ -52,6 +52,9 @@ msgstr "Næste >>"
 msgid "plugins.generic.confirmmembership.previous"
 msgstr "Tilbage <<"
 
+msgid "plugins.generic.confirmmembership.date"
+msgstr "Dato"
+
 msgid "plugins.generic.confirmmembership.name"
 msgstr "Navn"
 
@@ -83,4 +86,4 @@ msgid "plugins.generic.confirmmembership.review"
 msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
-msgstr "Side med liste over brugere der ikke automatisk kan slette"
+msgstr "Side med liste over brugere der ikke automatisk kan slettes"
