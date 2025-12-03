@@ -138,7 +138,7 @@ class ConfirmMembershipTask extends ScheduledTask {
     }
     private function userHasSubmission($userId, $jobsAutoDeleteAge) {
         $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*)   from stage_assignments join submissions on stage_assignments.submission_id =submissions.submission_id where last_modified  >  DATE(?) - interval ' $jobsAutoDeleteAge days' and user_id = ?", [Core::getCurrentDate(), $userId]);
+        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*) AS row_count  from stage_assignments join submissions on stage_assignments.submission_id =submissions.submission_id where last_modified  >  DATE(?) - interval ' $jobsAutoDeleteAge days' and user_id = ?", [Core::getCurrentDate(), $userId]);
         $current = $checkUserSubmissions->current();
         $row = $current;
         return $row ? (boolean) $row->row_count : false;
