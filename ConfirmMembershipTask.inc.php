@@ -38,9 +38,8 @@ class ConfirmMembershipTask extends ScheduledTask {
         $timestamp = new DateTime(Core::getCurrentDate());
         $timestamp->modify('-' . $daysmerged . ' day');
         $paras = [Core::getCurrentDate(), $mergesUserId, $maxusers];
-        $result =  $userDao->retrieve("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0 
-       and user_id != ? order by RANDOM() LIMIT ? ",
-        $paras);
+        $result =  $userDao->retrieve("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0
+       and user_id != ? order by RANDOM() LIMIT ? ", $paras);
 
         foreach ($result as $userId) {
             $user = $userDao->getById($userId->user_id);
@@ -81,7 +80,7 @@ class ConfirmMembershipTask extends ScheduledTask {
                 'fullname' => $user->getFullName(),
                 'journal' => $journalsNames,
             ]);
-           if ($mail->send()) {
+            if ($mail->send()) {
                 $user->updateSetting(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate(), 'Date', 0);
            }
            else{
@@ -121,6 +120,7 @@ class ConfirmMembershipTask extends ScheduledTask {
                 }
             }
         }
+
         $this->userAction = new UserAction();
         $userAction = $this->userAction;
         $userAction->mergeUsers($user->getId(), $mergesUserId);

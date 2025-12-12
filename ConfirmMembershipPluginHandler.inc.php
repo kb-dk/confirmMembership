@@ -137,9 +137,11 @@ class ConfirmMembershipPluginHandler extends  Handler
             $user = $this->userDao->getById($userId->user_id);
             $deletUser = [];
             $journals = $this->journalDao->getAll();
-
+            $deletUser['subscriber'] = false;
             while ($journal = $journals->next()) {
-
+                if ($this->subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $this->instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
+                    $deletUser['subscriber'] = true;
+                }
                 $memberJournals = NULL;
                 $roles = [];
                 foreach ($user->getRoles($journal->getId()) as $role) {
@@ -148,11 +150,6 @@ class ConfirmMembershipPluginHandler extends  Handler
                     $roles[] = __($roleNames[$role->getRoleId()]);
                 }
                 if (!is_null($memberJournals)) {
-                    if ($this->subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) || $this->instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
-                        $deletUser['subscriber'] = true;
-                    } else {
-                        $deletUser['subscriber'] = false;
-                    }
                     $deletUser['journals'] = $memberJournals;
                     $deletUser['name'] = $user->getFullName();
                     $deletUser['username'] = $user->getUsername();
@@ -166,9 +163,8 @@ class ConfirmMembershipPluginHandler extends  Handler
                     $deletUsers[] = $deletUser;
                 }
             }
-            if (count($deletUser) == 0) {
+            if (count($deletUser) == 1) {
                 $deletUser['journals'] = 'none';
-                $deletUser['subscriber'] = false;
                 $deletUser['assignment'] = $this->findAssignment($user->getId());
                 $deletUser['name'] = $user->getFullName();
                 $deletUser['username'] = $user->getUsername();
