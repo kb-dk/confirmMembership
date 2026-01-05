@@ -1,0 +1,147 @@
+msgid "plugins.generic.confirmmembership.roleids"
+msgstr "Indsæt kommasepareret streng med role id for de roller vi sender mails til"
+
+msgid "plugins.generic.confirmmembership.daysmail"
+msgstr "Antal dage fra sidste login til vi sender en bekræftelsesmail"
+
+msgid "plugins.generic.confirmmembership.daysmerged"
+msgstr "Antal dage fra bekræftelse afsendelse til vi merger/deleter kontoen"
+
+msgid "plugins.generic.confirmmembership.display.name"
+msgstr "Bekræft medlemskab"
+
+msgid "plugins.generic.confirmmembership.description"
+msgstr "Plugin til at bekræfte medlemskab"
+
+msgid "plugins.generic.confirmmembership.maxusers"
+msgstr "Max antal brugere der tasket skal gennemgå pr gang"
+
+msgid "admin.scheduledTask.ConfirmMembershipTask"
+msgstr "ConfirmMembershipTask"
+
+msgid "plugins.generic.confirmmembership.mergeusername"
+msgstr "Brugernavn på den bruger de delete brugere skal flettes ind i"
+
+msgid "plugins.generic.confirmmembership.testemails"
+msgstr "Semikolonsepareret streng af mails der skal sendes til når test er slået til"
+
+msgid "plugins.generic.confirmmembership.test"
+msgstr "Hvis aktiveret sendes bekræft medlemskab mails til emails i nedenstående felt"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted.submit"
+msgstr "Fjern"
+
+msgid "plugins.generic.confirmmembership.resetusernotdeleted"
+msgstr "Brugere vi ikke automatisk kan slette, bliver markeret i user-settings, tryk på denne knap for at fjerne markeringen"
+
+msgid "plugins.generic.confirmmembership.users"
+msgstr "User"
+
+msgid "plugins.generic.confirmmembership.amountofusers"
+msgstr "Antal brugere deleuser skal vise af gangen"
+
+msgid "plugins.generic.confirmmembership.total"
+msgstr "Antal brugere :{$total}"
+
+msgid "plugins.generic.confirmmembership.pagetitle"
+msgstr "Manuel sletning af brugere"
+
+msgid "plugins.generic.confirmmembership.next"
+msgstr "Næste >>"
+
+msgid "plugins.generic.confirmmembership.previous"
+msgstr "Tilbage <<"
+
+msgid "plugins.generic.confirmmembership.date"
+msgstr "Dato"
+
+msgid "plugins.generic.confirmmembership.name"
+msgstr "Navn"
+
+msgid "plugins.generic.confirmmembership.username"
+msgstr "Bruger navn"
+
+msgid "plugins.generic.confirmmembership.email"
+msgstr "Email"
+
+msgid "plugins.generic.confirmmembership.role"
+msgstr "Rolle"
+
+msgid "plugins.generic.confirmmembership.assignment"
+msgstr "Opgave"
+
+msgid "plugins.generic.confirmmembership.journals"
+msgstr "Presses"
+
+msgid "plugins.generic.confirmmembership.subscriber"
+msgstr "Abonnent"
+
+msgid "plugins.generic.confirmmembership.link"
+msgstr "Link til bruger"
+
+msgid "plugins.generic.confirmmembership.merges"
+msgstr "Flet"
+
+msgid "plugins.generic.confirmmembership.review"
+msgstr "(review)"
+
+msgid "plugins.generic.confirmmembership.deleteuserlink"
+msgstr "Side med liste over brugere der ikke automatisk kan slettes"
+
+msgid "confirmmembership.emails.subject"
+msgstr "Sletning af brugerkonto – Deletion of user account"
+
+msgid "confirmmembership.emails.description"
+msgstr "This email template is used to notify users that they need to reconfirm their membership"
+
+msgid "confirmmembership.emails.body"
+msgstr "ENGLISH BELOW  \n"
+       "<br />\n"
+       "<br />\n"
+       "Kære {$fullname}<br />\n"
+       "<br />\n"
+       "Vi kan se, at det er længe siden, at du har været logget ind på din brugerkonto hos tidsskrift.dk og/eller evt. et eller flere af tidsskrifterne derpå ({$journal}). Af sikkerhedshensyn og ift. databeskyttelsesforordningen sletter vi din brugerkonto, når der er gået mere end 1 år, siden du sidst har brugt den. Hvis du vil undgå, at din konto bliver slettet, skal du logge ind på https://tidsskrift.dk eller hos selve tidsskriftet, som din brugerkonto evt. er tilknyttet, indenfor den næste måned. Bliver din brugerkonto slettet, er du altid velkommen til at oprette en ny. <br />\n"
+       "<br />\n"
+       "Med venlig hilsen<br />\n"
+       "Tidsskrift.dk, Det Kgl. Bibliotek \n"
+       "<br />\n"
+       "<br />\n"
+       "ENGLISH:  \n"
+       "<br />\n"
+       "<br />\n"
+       "Dear {$fullname},<br />\n"
+       "<br />\n"
+       "It has been a while since you have logged into your user account at tidsskrift.dk and/or maybe one or more of the journals hosted by tidsskrift.dk ({$journal}). Due to security reasons and according to the General Data Protection Regulation, we will delete your user account, if is has been inactive for more than one year. If you want to prevent your account from being deleted, you need to log into your account at https://tidsskrift.dk or directly at the website of the journal, your user account is registered with, if any, within the next month. If your account is deleted, you are always welcome to create a new account.<br />\n"
+       "<br />\n"
+       "Best regards, <br />\n"
+       "Tidsskrift.dk, The Royal Danish Library \n"
+       "<br />\n"
+
+msgid "confirmmembershipnojournals.emails.subject"
+msgstr "Sletning af brugerkonto – Deletion of user account"
+
+msgid "confirmmembershipnojournals.emails.description"
+msgstr "This email template is used to notify users to reconfirm their membership when they are not subscribed to a specific journal"
+
+msgid "confirmmembershipnojournals.emails.body"
+msgstr "ENGLISH BELOW  \n"
+       "<br />\n"
+       "<br />\n"
+       "Kære {$fullname}<br />\n"
+       "<br />\n"
+       "Vi kan se, at det er længe siden, at du har været logget ind på din brugerkonto hos tidsskrift.dk. Af sikkerhedshensyn og ift. databeskyttelsesforordningen sletter vi din brugerkonto, når der er gået mere end 1 år, siden du sidst har brugt den. Hvis du vil undgå, at din konto bliver slettet, skal du logge ind på https://tidsskrift.dk indenfor den næste måned. Bliver din brugerkonto slettet, er du altid velkommen til at oprette en ny.<br />\n"
+       "<br />\n"
+       "Med venlig hilsen<br />\n"
+       "Tidsskrift.dk, Det Kgl. Bibliotek \n"
+       "<br />\n"
+       "<br />\n"
+       "ENGLISH:  \n"
+       "<br />\n"
+       "<br />\n"
+       "Dear {$fullname},<br />\n"
+       "<br />\n"
+       "It has been a while since you have logged into your user account at tidsskrift.dk. Due to security reasons and according to the General Data Protection Regulation, we will delete your user account, if it has been inactive for more than one year. If you want to prevent your account from being deleted, you need to log into your account at https://tidsskrift.dk within the next month. If your account is deleted, you are always welcome to create a new account.<br />\n"
+       "<br />\n"
+       "Best regards, <br />\n"
+       "Tidsskrift.dk, The Royal Danish Library \n"
+       "<br />\n"

@@ -1,5 +1,6 @@
 {extends file="layouts/backend.tpl"}
 {block name="page"}
+
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.6/css/dataTables.dataTables.css" />
     <script src="https://cdn.datatables.net/2.0.6/js/dataTables.js"></script>
     <script>
@@ -21,7 +22,7 @@
         {translate key="plugins.generic.confirmmembership.pagetitle"}
     </h1>
     <div><p>{translate key="plugins.generic.confirmmembership.total" total=$total}</p></div>
-    <table id="confirmmebership"  class="table stripe dataTable">
+    <table id="confirmmebership"  class="table stripe dataTable app__main">
         <thead>
             <tr>
                 <th class="no-sort">{translate key="plugins.generic.confirmmembership.date"}</th>
@@ -31,7 +32,6 @@
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.role"}</th>
                 <th style="min-width: 400px;">{translate key="plugins.generic.confirmmembership.assignment"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.journals"}</th>
-                <th class="sorting">{translate key="plugins.generic.confirmmembership.subscriber"}</th>
                 <th class="no-sort">{translate key="plugins.generic.confirmmembership.link"}</th>
                 <th ></th>
             </tr>
@@ -58,12 +58,8 @@
                         {/foreach}
                     {/if}
                 </td>
-                <td>{$user['journals']}</td>
-                <td>
-                    {if $user['subscriber'] }
-                        <p>{translate key="plugins.generic.confirmmembership.subscriber"}</p>
-                    {/if}
-                </td>
+                <td>{$user['presses']}</td>
+
                 <td>
                     {if $user['link'] }
                         <a href="{$user['link']}" target="_blank">{translate key="plugins.generic.confirmmembership.link"}</a>
