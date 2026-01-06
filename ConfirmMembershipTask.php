@@ -31,13 +31,13 @@ class ConfirmMembershipTask extends ScheduledTask {
     
     public function executeActions() {
         $userDao = Repo::user()->dao;
-        $journalDao = DAORegistry::getDAO('PressDAO'); /* @var $journalDao JournalDAO */
+        $pressDao = DAORegistry::getDAO('PressDAO'); /* @var $pressDao pressDAO */
         $pluginSettings = new ConfirmMembershipPlugin();
-        $this->sendConfirmMailAndDisabled($userDao, $journalDao, $pluginSettings);
+        $this->sendConfirmMailAndDisabled($userDao, $pressDao, $pluginSettings);
     }
 
     // Send confirm membership email to users or delete them if they have not logged in.
-    private function sendConfirmMailAndDisabled($userDao, $journalDao, $pluginSettings) {
+    private function sendConfirmMailAndDisabled($userDao, $pressDao, $pluginSettings) {
 
         $daysSendMail = $pluginSettings->getSetting(CONTEXT_SITE, 'daysmail');
         $daysmerged = $pluginSettings->getSetting(CONTEXT_SITE, 'daysmerged');
@@ -48,11 +48,11 @@ class ConfirmMembershipTask extends ScheduledTask {
         $timestamp = new \DateTime(Core::getCurrentDate());
         $timestamp->modify('-' . 2 . ' minutes');
         $paras = [Core::getCurrentDate(), $mergesUserId, $maxusers];
-        $result = DB::select("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0
-       and user_id != ? order by RANDOM() LIMIT ? ",
-        $paras);
+       // $result = DB::select("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0
+       //and user_id != ? order by RANDOM() LIMIT ? ",
+       // $paras);
 
-      //  $result = DB::select("select user_id from users where user_id = 8");
+        $result = DB::select("select user_id from users where user_id = 11");
         foreach ($result as $userId) {
 
             $user = $userDao->get($userId->user_id);// It is not time to merge the user.
@@ -60,32 +60,49 @@ class ConfirmMembershipTask extends ScheduledTask {
                 || $this->getUserSettings($user->getId(), ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE)) {
                 continue;
             } else if (!is_null($this->getUserSettings($user->getId(), ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND)) && $timestamp > new DateTime($this->getUserSettings($user->getId(), ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND))) {
-                $this->mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId);
+                $this->mergeUsers($userDao, $pressDao, $roleIds, $user, $mergesUserId);
                 continue;
             }
 
-            $journals = $journalDao->getAll();
-            // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
-            $memberJournals = [];
-            while ($journal = $journals->next()) {
-                foreach ($user->getRoles($journal->getId()) as $role) {
-                    $memberJournals[] = $journal->getName($journal->getPrimaryLocale());
+            $presses = $pressDao->getAll();
+
+            // Find the name(s) of the presses the user is signed up for and check roles and subscriptions
+            $memberPresses = [];
+            while ($press = $presses->next()) {
+                error_log($press->getName($press->getPrimaryLocale()));
+
+                foreach ($user->getRoles($press->getId()) as $role) {
+                    error_log('roles her:');
+                    error_log(print_r($role, true));
+                    $memberPresses[] = $press->getName($press->getPrimaryLocale());
+                    error_log('roles end');
                     break;
                 }
             }
-            $journalsNames = '';
-            if (!empty($memberJournals)) {
-                $journalsNames = implode(', ', $memberJournals);
-                $emailTemplate = Repo::emailTemplate()->getByKey(CONTEXT_SITE, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
+            $fullName = $user->getFullName() ? $user->getFullName() : $user->getGivenName('en') . ' ' . $user->getFamilyName('en');
+            if (!empty($memberPresses)) {
+                error_log('send confirm 1');
+                $pressNames = implode(', ', $memberPresses);
+                $mailable = new Mailable();
+                $mailable
+                    ->from(Config::getVar('email', 'default_envelope_sender'))
+                    ->body(__('confirmmembership.emails.body', [
+                        'fullname' => $fullName,
+                        'press' => $pressNames
+                    ], null))
+                    ->subject(__('confirmmembershipnojournals.emails.subject'));
             }
             else {
+                $mailable = new Mailable();
+                error_log('send confirm 1');
+                $mailable
+                    ->from(Config::getVar('email', 'default_envelope_sender'))
+                    ->body(__('confirmmembershipnojournals.emails.body', [
+                        'fullname' => $fullName,
+                    ], null))
+                    ->subject(__('confirmmembershipnojournals.emails.subject'));
                 $emailTemplate =  Repo::emailTemplate()->getByKey(CONTEXT_SITE, 'COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP');//new EmailTemplate('COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP', 'en_US');
             }
-            error_log(print_r($emailTemplate, true));
-            $mailable = new Mailable();
-            $mailable
-                ->from('majr@kb.dk')
-                ->body(__('confirmmembershipnojournals.emails.body'));
 
 
             if ($pluginSettings->getSetting(CONTEXT_SITE, 'test')) {
@@ -94,18 +111,12 @@ class ConfirmMembershipTask extends ScheduledTask {
                     $mailable->to($testmail);
                 }
             } else {
-                $mailable->to($user->getEmail(), $user->getFullName());
+                $mailable->to($user->getEmail(), $fullName);
             }
-            $mailable->addData([
-                'fullname' => $user->getFullName(), 'journal' => $journalsNames
-            ]);
-
-
-          if(true) {// if ( Mail::send($mailable)) {
-              //$userSettingsDao = DAORegistry::getDAO('UserSettingsDAO');
+           try {
+               Mail::send($mailable);
               DB::insert("insert into user_settings(user_id, locale, setting_name, setting_value ) values(?,'en', ?,?) ",[$user->getId(),ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate()] );
-           }
-           else{
+           } catch (\Throwable $e) {
                error_log('Error sending mail to user[' . $user->getId() . ']');
            }
         }
@@ -119,12 +130,12 @@ class ConfirmMembershipTask extends ScheduledTask {
             $user->deleteDate(ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE);
         }
     }
-    private function mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId) {
+    private function mergeUsers($userDao, $pressDao, $roleIds, $user, $mergesUserId) {
 
-        $journals = $journalDao->getAll();
+        $presses = $pressDao->getAll();
         // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
-        while ($journal = $journals->next()) {
-            foreach ($user->getRoles($journal->getId()) as $role) {
+        while ($press = $presses->next()) {
+            foreach ($user->getRoles($press->getId()) as $role) {
                 if (!in_array($role->getId(), $roleIds)) {
                     $this->userCantBeDeleted($user, $userDao);
                     return;
