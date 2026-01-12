@@ -73,19 +73,13 @@ class ConfirmMembershipTask extends ScheduledTask {
             // Find the name(s) of the presses the user is signed up for and check roles and subscriptions
             $memberPresses = [];
             while ($press = $presses->next()) {
-                error_log($press->getName($press->getPrimaryLocale()));
-
                 foreach ($user->getRoles($press->getId()) as $role) {
-                    error_log('roles her:');
-                    error_log(print_r($role, true));
                     $memberPresses[] = $press->getName($press->getPrimaryLocale());
-                    error_log('roles end');
                     break;
                 }
             }
             $fullName = $user->getFullName() ? $user->getFullName() : $user->getGivenName('en') . ' ' . $user->getFamilyName('en');
             if (!empty($memberPresses)) {
-                error_log(__('confirmmembershipnojournals.emails.subject'));
                 $pressNames = implode(', ', $memberPresses);
                 $mailable = new Mailable();
                 $mailable
@@ -98,7 +92,6 @@ class ConfirmMembershipTask extends ScheduledTask {
             }
             else {
                 $mailable = new Mailable();
-                error_log('send confirm 1');
                 $mailable
                     ->from($senderMail)
                     ->body(__('confirmmembershipnojournals.emails.body', [
@@ -117,8 +110,8 @@ class ConfirmMembershipTask extends ScheduledTask {
                 $mailable->to($user->getEmail(), $fullName);
             }
            try {
-               Mail::send($mailable);
-              DB::insert("insert into user_settings(user_id, locale, setting_name, setting_value ) values(?,'en', ?,?) ",[$user->getId(),ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate()] );
+                Mail::send($mailable);
+                DB::insert("insert into user_settings(user_id, locale, setting_name, setting_value ) values(?,'en', ?,?) ",[$user->getId(),ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate()] );
            } catch (\Throwable $e) {
                error_log('Error sending mail to user[' . $user->getId() . ']');
            }
