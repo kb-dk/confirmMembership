@@ -45,10 +45,10 @@ msgid "plugins.generic.confirmmembership.mergeuserpopup"
 msgstr "Are you sure you want to merge this user {$merge_user}"
 
 msgid "plugins.generic.confirmmembership.total"
-msgstr "amount of users :{$total}"
+msgstr "Number of users :{$total}
 
 msgid "plugins.generic.confirmmembership.amountofusers"
-msgstr "amount of users :{$total}"
+msgstr "Number of users shared users should be displayed at a time"
 
 msgid "plugins.generic.confirmmembership.pagetitle"
 msgstr "Manual deletion of users"
