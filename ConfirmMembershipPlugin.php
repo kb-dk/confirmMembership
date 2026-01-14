@@ -23,7 +23,7 @@ use PKP\linkAction\request\AjaxModal;
 use PKP\security\Validation;
 use PKP\plugins\Hook;
 use PKP\core\JSONMessage;
-use PKP\core\Config;
+use PKP\config\Config;
 use PKP\DAORegistry;
 
 class ConfirmMembershipPlugin extends GenericPlugin {

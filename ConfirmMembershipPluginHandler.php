@@ -7,7 +7,7 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\handler\Handler;
 use Illuminate\Support\Facades\DB;
-use PKP\core\PKPRequest;
+use PKP\user\Repository;
 use PKP\lib\pkp\classes\plugins\Plugin;
 use PKP\classes\user\UserAction;
 use PKP\classes\core\AppLocale;
@@ -91,27 +91,19 @@ class ConfirmMembershipPluginHandler extends Handler
     public function index($args, $request) {
         $this->templateMgr = TemplateManager::getManager($request);
         $this->templateMgr->assign('pageTitle', 'My Admin Page');
-        //$userRoles = $this->getAuthorizedContextObject(Application::ASSOC_TYPE_USER_ROLES);
-        //$this->templateMgr->setUserRoles($userRoles);
         $this->_isBackendPage = true;
         $this->templateMgr->setupBackendPage();
-        //$this->_isBackendPage = true;
-        //$this->templateMgr->setupBackendPage();
-        error_log('index');
 
-        error_log('userRoles:');
-        error_log(print_r($userRoles, true));
         $this->templateMgr->assign('userRoles', $userRoles);
         $amountOfUsers = (int) $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
-        error_log('index 1');
         $userId = $request->getUserVar('userid');
-        error_log('index 3');
         if ($userId) {
             $mergeUsername = $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername');
             $mergeUser = $this->userDao->getByUsername($mergeUsername);
 
             if ($mergeUser) {
-                $userAction = new UserAction();
+                $userDao = Repo::user()->dao;
+                $userAction =  new Repository($userDao);
                 $userAction->mergeUsers((int) $userId, $mergeUser->getId());
             }
         }
@@ -150,12 +142,10 @@ class ConfirmMembershipPluginHandler extends Handler
 
     protected function getTotalCount(): int
     {
-        error_log(ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE);
         $result = DB::select(
             'SELECT COUNT(*) FROM user_settings WHERE setting_name = ?',
             [ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE]
         );
-        error_log(print_r($result, true));
         return (int) $result[0]->count;
     }
 

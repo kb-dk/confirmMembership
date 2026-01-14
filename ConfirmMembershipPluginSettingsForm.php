@@ -14,6 +14,7 @@ use PKP\form\validation\FormValidatorCSRF;
 use APP\template\TemplateManager;
 use APP\notification\NotificationManager;
 use APP\core\Application;
+
 class ConfirmMembershipPluginSettingsForm extends Form {
 
 	public $plugin;

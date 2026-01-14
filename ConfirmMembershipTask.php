@@ -145,7 +145,7 @@ class ConfirmMembershipTask extends ScheduledTask {
         }
         $this->userAction = new Repository($userDao);
 
-        $this->userAction->mergeUsers($user->getId(), $mergesUserId, $jobsAutoDeleteAge);
+        $this->userAction->mergeUsers($user->getId(), $mergesUserId);
     }
     private function userCantBeDeleted (&$user, $userDao) {
         DB::insert("insert into user_settings(user_id, locale, setting_name, setting_value ) values(?,'en', ?,?) ",[$user->getId(), 'membershipcannotdelete', true ]);
