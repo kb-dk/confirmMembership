@@ -87,3 +87,6 @@ msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Side med liste over brugere der ikke automatisk kan slettes"
+
+msgid "plugins.generic.confirmmembership.jobsautodelete"
+msgstr "Hvor mange dage må et job være gammel før vi auto sletter brugeren"

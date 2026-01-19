@@ -92,7 +92,8 @@ msgstr "Merges"
 msgid "plugins.generic.confirmmembership.review"
 msgstr "(review)"
 
-
-
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Page with list of users who cannot automatically delete"
+
+msgid "plugins.generic.confirmmembership.jobsautodelete"
+msgstr "How many days can a job be old before we auto delete the user?"
