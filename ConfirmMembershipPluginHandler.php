@@ -28,10 +28,6 @@ class ConfirmMembershipPluginHandler extends Handler
     /** @var pressDAO */
     protected $pressDao;
 
-    /** @var UserSettingsDAO */
-    protected $userSettingsDao;
-
-
     /** @var UserDAO */
     protected $userDao;
 
@@ -42,14 +38,10 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         parent::__construct();
 
-
         $this->plugin = PluginRegistry::getPlugin('generic', 'confirmmembershipplugin');
-
         $this->userDao = Repo::user()->dao;
         $this->pressDao = \PKP\db\DAORegistry::getDAO('PressDAO');
-//
         $this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-
         $this->addRoleAssignment([Role::ROLE_ID_SITE_ADMIN], ['index']);
 
     }
@@ -62,16 +54,7 @@ class ConfirmMembershipPluginHandler extends Handler
         parent::initialize($request, $args);
         $this->templateMgr = TemplateManager::getManager($request);
         $userRoles = (array) $this->getAuthorizedContextObject(Application::ASSOC_TYPE_USER_ROLES);
-
         $this->templateMgr->assign(['userRoles' => $userRoles]);
-//        AppLocale::requireComponents(
-//            LOCALE_COMPONENT_PKP_ADMIN,
-//            LOCALE_COMPONENT_APP_MANAGER,
-//            LOCALE_COMPONENT_APP_ADMIN,
-//            LOCALE_COMPONENT_APP_COMMON,
-//            LOCALE_COMPONENT_PKP_USER,
-//            LOCALE_COMPONENT_PKP_MANAGER
-//        );
     }
 
     /**
@@ -93,14 +76,11 @@ class ConfirmMembershipPluginHandler extends Handler
         $this->templateMgr->assign('pageTitle', 'My Admin Page');
         $this->_isBackendPage = true;
         $this->templateMgr->setupBackendPage();
-
-        $this->templateMgr->assign('userRoles', $userRoles);
         $amountOfUsers = (int) $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         $userId = $request->getUserVar('userid');
         if ($userId) {
             $mergeUsername = $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername');
             $mergeUser = $this->userDao->getByUsername($mergeUsername);
-
             if ($mergeUser) {
                 $userDao = Repo::user()->dao;
                 $userAction =  new Repository($userDao);
@@ -120,12 +100,8 @@ class ConfirmMembershipPluginHandler extends Handler
         // Fetch users to delete
         $users = $this->getUsersToDelete($next);
 
-        // Setup the template for the backend page
-       //  $this->templateMgr->setupBackendPage();
-
 
         $this->templateMgr->assign([
-            'userRoles'=> $userRoles,
             'total' => $this->getTotalCount(),
             'users' => $users,
             'next' => $next,
@@ -134,7 +110,6 @@ class ConfirmMembershipPluginHandler extends Handler
                 ['merge_user' => $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername')]
             ),
         ]);
-       error_log( $this->plugin->getTemplateResource('index.tpl'));
         // Display the template
          $this->templateMgr->display($this->plugin->getTemplateResource('index.tpl')
         );

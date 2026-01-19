@@ -2,15 +2,11 @@
 /**
  * @file plugins/generic/confirmMembership/ConfirmMembershipPlugin.php
  *
- * Copyright (c) 2014-2020 Simon Fraser University
- * Copyright (c) 2003-2020 John Willinsky
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
- *
  * @package plugins.generic.customBlockManager
  *
- * @class CustomBlockManagerPlugin
+ * @class ConfirmMembershipPlugin
  *
- * Plugin to let managers add and delete custom sidebar blocks
+ * Plugin for users to confirm their membership
  *
  */
 namespace APP\plugins\generic\confirmMembership;
@@ -27,9 +23,8 @@ use PKP\config\Config;
 use PKP\DAORegistry;
 
 class ConfirmMembershipPlugin extends GenericPlugin {
-    private bool $injected = false;
     public const SETTING_MEMBERSHIP_MAIL_SEND = 'confirmmembershipmailsend';
-        public const SETTING_CAN_NOT_DELETE = "membershipcannotdelete";
+    public const SETTING_CAN_NOT_DELETE = "membershipcannotdelete";
     public function register( $category, $path, $mainContextId = null): bool {
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
