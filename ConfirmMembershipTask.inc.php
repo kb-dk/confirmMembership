@@ -34,12 +34,12 @@ class ConfirmMembershipTask extends ScheduledTask {
         $maxusers = $pluginSettings->getSetting(CONTEXT_SITE, 'maxusers');
         $roleIds = explode(',', $pluginSettings->getSetting(CONTEXT_SITE, 'roleids'));
         $mergesUserId = $userDao->getByUsername($pluginSettings->getSetting(CONTEXT_SITE, 'mergeusername'))->getId();
+        $jobsAutoDeleteAge = $pluginSettings->getSetting(CONTEXT_SITE, 'jobsautodelete');
         $timestamp = new DateTime(Core::getCurrentDate());
         $timestamp->modify('-' . $daysmerged . ' day');
         $paras = [Core::getCurrentDate(), $mergesUserId, $maxusers];
-        $result =  $userDao->retrieve("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0 
-       and user_id != ? order by RANDOM() LIMIT ? ",
-        $paras);
+        $result =  $userDao->retrieve("select user_id from users  WHERE date_last_login < DATE(?) - interval ' $daysSendMail days' and disabled = 0
+       and user_id != ? order by RANDOM() LIMIT ? ", $paras);
 
         foreach ($result as $userId) {
             $user = $userDao->getById($userId->user_id);
@@ -47,7 +47,7 @@ class ConfirmMembershipTask extends ScheduledTask {
             if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) && $timestamp < new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND)) || $user->getData(SETTING_CAN_NOT_DELETE)) {
                 continue;
             } else if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) && $timestamp > new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND))) {
-                $this->mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId);
+                $this->mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge);
                 continue;
             }
 
@@ -80,7 +80,7 @@ class ConfirmMembershipTask extends ScheduledTask {
                 'fullname' => $user->getFullName(),
                 'journal' => $journalsNames,
             ]);
-           if ($mail->send()) {
+            if ($mail->send()) {
                 $user->updateSetting(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate(), 'Date', 0);
            }
            else{
@@ -98,10 +98,11 @@ class ConfirmMembershipTask extends ScheduledTask {
             $userSettingsDao->deleteSetting($user->user_id, SETTING_CAN_NOT_DELETE);
         }
     }
-    private function mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId) {
+    private function mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge) {
         $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
         $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
-        if ($this->userHasReviews($user->getId()) || $this->userHasSubmission($user->getId())) {
+
+        if ($this->userHasReviews($user->getId(), $jobsAutoDeleteAge) || $this->userHasSubmission($user->getId(), $jobsAutoDeleteAge) ) {
             $this->userCantBeDeleted($user, $userDao);
             return;
         }
@@ -119,6 +120,7 @@ class ConfirmMembershipTask extends ScheduledTask {
                 }
             }
         }
+
         $this->userAction = new UserAction();
         $userAction = $this->userAction;
         $userAction->mergeUsers($user->getId(), $mergesUserId);
@@ -128,15 +130,15 @@ class ConfirmMembershipTask extends ScheduledTask {
         $userDao->updateObject($user);
         return true;
     }
-    private function userHasReviews($userId) {
+    private function userHasReviews($userId, $jobsAutoDeleteAge) {
         $reviewersignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $reviewersignmentDao->retrieve('SELECT count(*)  AS row_count  FROM review_assignments  where reviewer_id = ? ', [$userId]); //DB::table('stage_assignments')->where('user_id', $userId);
+        $checkUserSubmissions = $reviewersignmentDao->retrieve("SELECT count(*)  AS row_count  FROM review_assignments  where reviewer_id = ? and last_modified > DATE(?) - interval ' $jobsAutoDeleteAge days' ", [$userId, Core::getCurrentDate()]);
         $row = $checkUserSubmissions->current();
         return $row ? (boolean) $row->row_count : false;
     }
-    private function userHasSubmission($userId) {
+    private function userHasSubmission($userId, $jobsAutoDeleteAge) {
         $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*)  AS row_count from stage_assignments where user_id = ?", [$userId]); //DB::table('stage_assignments')->where('user_id', $userId);
+        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*) AS row_count  from stage_assignments join submissions on stage_assignments.submission_id =submissions.submission_id where last_modified  >  DATE(?) - interval ' $jobsAutoDeleteAge days' and user_id = ?", [Core::getCurrentDate(), $userId]);
         $current = $checkUserSubmissions->current();
         $row = $current;
         return $row ? (boolean) $row->row_count : false;

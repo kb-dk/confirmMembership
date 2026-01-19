@@ -1,5 +1,5 @@
 msgid "plugins.generic.confirmmembership.roleids"
-msgstr "Insert comma separated string with role id"
+msgstr "Insert comma separated string with role id for the roles we will delete automatically if the dont have pending jobs"
 
 msgid "plugins.generic.confirmmembership.display.name"
 msgstr "Confirm Membership"
@@ -94,3 +94,6 @@ msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Page with list of users who cannot automatically delete"
+
+msgid "plugins.generic.confirmmembership.jobsautodelete"
+msgstr "How many days can a job be old before we auto delete the user?"
