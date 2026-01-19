@@ -71,7 +71,7 @@ msgid "plugins.generic.confirmmembership.assignment"
 msgstr "Opgave"
 
 msgid "plugins.generic.confirmmembership.journals"
-msgstr "Tidsskrift"
+msgstr "Presses"
 
 msgid "plugins.generic.confirmmembership.subscriber"
 msgstr "Abonnent"
@@ -87,3 +87,9 @@ msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Side med liste over brugere der ikke automatisk kan slettes"
+
+msgid "plugins.generic.confirmmembership.jobsautodelete"
+msgid "Jobs ældre den den angivet alder slettes"
+
+msgid "plugins.generic.confirmmembership.mergeuserpopup"
+msgstr "Er du sikker på, at du vil flette denne bruger {$merge_user}?"

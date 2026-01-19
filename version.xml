@@ -11,8 +11,8 @@
 <version>
 	<application>confirmMembership</application>
 	<type>plugins.generic</type>
-	<release>1.0.0.0</release>
-	<date>2023-08-01</date>
+	<release>1.2.0.0</release>
+	<date>2026-01-19</date>
 	<lazy-load>1</lazy-load>
 	<class>ConfirmMembershipPlugin</class>
 </version>

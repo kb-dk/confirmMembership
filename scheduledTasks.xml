@@ -8,7 +8,7 @@
 <!DOCTYPE scheduled_tasks SYSTEM "../../../lib/pkp/dtd/scheduledTasks.dtd">
 
 <scheduled_tasks>
-    <task class="plugins.generic.confirmMembership.ConfirmMembershipTask">
+    <task class="APP\plugins\generic\confirmMembership\ConfirmMembershipTask">
         <descr>Send mail to users to ask them to login for confirming membership oherwise we delete there account..</descr>
         <frequency hour="1"/>
     </task>
