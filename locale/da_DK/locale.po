@@ -1,5 +1,5 @@
 msgid "plugins.generic.confirmmembership.roleids"
-msgstr "Indsæt kommasepareret streng med role id for de roller vi sender mails til"
+msgstr "Indsæt kommasepareret streng med rolle id på de roller vi IKKE sletter automatisk"
 
 msgid "plugins.generic.confirmmembership.daysmail"
 msgstr "Antal dage fra sidste login til vi sender en bekræftelsesmail"

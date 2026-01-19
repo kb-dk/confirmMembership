@@ -1,5 +1,5 @@
 msgid "plugins.generic.confirmmembership.roleids"
-msgstr "Insert comma separated string with role id"
+msgstr "Insert comma separated string with role id for the roles we will delete automatically if the dont have pending jobs"
 
 msgid "plugins.generic.confirmmembership.display.name"
 msgstr "Confirm Membership"
@@ -91,6 +91,8 @@ msgstr "Merges"
 
 msgid "plugins.generic.confirmmembership.review"
 msgstr "(review)"
+
+
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Page with list of users who cannot automatically delete"
