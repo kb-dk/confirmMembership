@@ -1,5 +1,5 @@
 msgid "plugins.generic.confirmmembership.roleids"
-msgstr "Indsæt kommasepareret streng med role id for de roller vi sender mails til"
+msgstr "Indsæt kommasepareret streng med rolle-id for de roller, vi sletter automatisk, hvis de ikke har ventende job"
 
 msgid "plugins.generic.confirmmembership.daysmail"
 msgstr "Antal dage fra sidste login til vi sender en bekræftelsesmail"
@@ -52,6 +52,9 @@ msgstr "Næste >>"
 msgid "plugins.generic.confirmmembership.previous"
 msgstr "Tilbage <<"
 
+msgid "plugins.generic.confirmmembership.date"
+msgstr "Dato"
+
 msgid "plugins.generic.confirmmembership.name"
 msgstr "Navn"
 
@@ -83,4 +86,7 @@ msgid "plugins.generic.confirmmembership.review"
 msgstr "(review)"
 
 msgid "plugins.generic.confirmmembership.deleteuserlink"
-msgstr "Side med liste over brugere der ikke automatisk kan slette"
+msgstr "Side med liste over brugere der ikke automatisk kan slettes"
+
+msgid "plugins.generic.confirmmembership.jobsautodelete"
+msgstr "Hvor mange dage må et job være gammel før vi auto sletter brugeren"

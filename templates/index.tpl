@@ -7,7 +7,12 @@
             $('#confirmmebership').DataTable({
                 "paging":   false,
                 "info":  false,
-                "bFilter": false
+                "bFilter": false,
+                "order": [],
+                "columnDefs": [ {
+                    "targets": 'no-sort',
+                    "orderable": false,
+                } ]
             });
         } );
     </script>
@@ -19,6 +24,7 @@
     <table id="confirmmebership"  class="table stripe dataTable">
         <thead>
             <tr>
+                <th class="no-sort">{translate key="plugins.generic.confirmmembership.date"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.name"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.username"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.email"}</th>
@@ -26,13 +32,14 @@
                 <th style="min-width: 400px;">{translate key="plugins.generic.confirmmembership.assignment"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.journals"}</th>
                 <th class="sorting">{translate key="plugins.generic.confirmmembership.subscriber"}</th>
-                <th class="">{translate key="plugins.generic.confirmmembership.link"}</th>
+                <th class="no-sort">{translate key="plugins.generic.confirmmembership.link"}</th>
                 <th ></th>
             </tr>
         </thead>
         <tbody>
          {foreach from=$users item="user"}
             <tr>
+                <td>{$user['date']}</td>
                 <td>{$user['name']}</td>
                 <td>{$user['username']}</td>
                 <td>{$user['email']}</td>
