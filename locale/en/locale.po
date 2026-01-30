@@ -96,4 +96,4 @@ msgid "plugins.generic.confirmmembership.deleteuserlink"
 msgstr "Page with list of users who cannot automatically delete"
 
 msgid "plugins.generic.confirmmembership.jobsautodelete"
-msgid "Jobs older than the specified age will be deleted."
+msgstr "Jobs older than the specified age will be deleted."
