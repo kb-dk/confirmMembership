@@ -122,8 +122,8 @@ class ConfirmMembershipTask extends ScheduledTask {
     private function resetUsersSettins($userDao){
         $users= DB::select("select users.user_id from users, user_settings where date_last_login > NOW() - INTERVAL '356 days' and user_settings.setting_name = ? AND users.user_id = user_settings.user_id", [ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND]);
         foreach ($users as $user) {
-            $user->deleteDate(ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND);
-            $user->deleteDate(ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE);
+            $user->deleteSetting(ConfirmMembershipPlugin::SETTING_MEMBERSHIP_MAIL_SEND);
+            $user->deleteSetting(ConfirmMembershipPlugin::SETTING_CAN_NOT_DELETE);
         }
     }
     private function mergeUsers($userDao, $pressDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge) {
