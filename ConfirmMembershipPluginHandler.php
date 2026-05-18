@@ -11,37 +11,34 @@ use PKP\core\PKPApplication;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 use PKP\security\authorization\PKPSiteAccessPolicy;
+use Illuminate\Support\Facades\DB;
+use PKP\security\Role;
+
 
 class ConfirmMembershipPluginHandler extends Handler
 {
     public $templateMgr;
     public $plugin;
     public $journalDao;
-    public $userSettingsDao;
     public $subscriptionDao;
     public $instituSubscriptionDao;
-    public $stageAssignmentDao;
 
     public function __construct()
     {
         parent::__construct();
         $this->plugin = PluginRegistry::getPlugin('generic', 'confirmmembershipplugin');
         $this->journalDao = DAORegistry::getDAO('JournalDAO');
-        $this->userSettingsDao = DAORegistry::getDAO('UserSettingsDAO');
         $this->subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
         $this->instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
-        $this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
         $this->addRoleAssignment(
-            [ROLE_ID_SITE_ADMIN],
-            [
-                'index',
-            ]
+            [Role::ROLE_ID_SITE_ADMIN], ['index',]
         );
     }
 
     /**
      * @copydoc PKPHandler::initialize()
      */
+
     public function initialize($request, $args = null)
     {
         $this->templateMgr = TemplateManager::getManager($request);
@@ -64,45 +61,48 @@ class ConfirmMembershipPluginHandler extends Handler
 
     public function index($args, $request)
     {
-        $amountOfUsers = $this->plugin->getSetting(PKPApplication::CONTEXT_SITE, 'amountofusers');
-
+        $this->templateMgr = TemplateManager::getManager($request);
+        $this->templateMgr->assign('pageTitle', 'My Admin Page');
+        $this->_isBackendPage = true;
+        $amountOfUsers = (int) $this->plugin->getSetting(CONTEXT_SITE, 'amountofusers');
         $userId = $request->getUserVar('userid');
         if ($userId) {
-            $mergeUsername = $this->plugin->getSetting(PKPApplication::CONTEXT_SITE, 'mergeusername');
+            $mergeUsername = $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername');
             $mergeUser = Repo::user()->getByUsername($mergeUsername);
             if ($mergeUser) {
-                Repo::user()->merge($userId, $mergeUser->getId());
+                Repo::user()->mergeUsers((int) $userId, $mergeUser->getId());
             }
         }
 
-        $nextParam = $request->getUserVar('next');
-        $previousParam = $request->getUserVar('previous');
-
-        if ($nextParam) {
-            $next = $amountOfUsers + intval($nextParam);
-        } elseif ($previousParam) {
-            $next = intval($previousParam) - $amountOfUsers;
+        // Determine the next offset for pagination
+        if ($request->getUserVar('next')) {
+            $next = $amountOfUsers + (int) $request->getUserVar('next');
+        } elseif ($request->getUserVar('previous')) {
+            $next = (int) $request->getUserVar('previous') - $amountOfUsers;
         } else {
             $next = $amountOfUsers;
         }
 
+        // Fetch users to delete
         $users = $this->getUsersToDelete($next);
-        $this->templateMgr->setupBackendPage();
+
+
         $this->templateMgr->assign([
             'total' => $this->getTotalCount(),
             'users' => $users,
             'next' => $next,
             'show' => $amountOfUsers,
-            'mergesUser' => __("plugins.generic.confirmmembership.mergeuserpopup", [
-                'merge_user' => $this->plugin->getSetting(PKPApplication::CONTEXT_SITE, 'mergeusername')
-            ]),
+            'mergesUser' => __('plugins.generic.confirmmembership.mergeuserpopup',
+                ['merge_user' => $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername')]
+            ),
         ]);
-        return $this->templateMgr->display($this->plugin->getTemplateResource('index.tpl'));
+        // Display the template
+        $this->templateMgr->display($this->plugin->getTemplateResource('index.tpl')
+        );
     }
-
     protected function getTotalCount()
     {
-        $result = \Illuminate\Support\Facades\DB::table('user_settings')
+        $result = DB::table('user_settings')
             ->where('setting_name', SETTING_CAN_NOT_DELETE)
             ->count();
 
@@ -114,7 +114,7 @@ class ConfirmMembershipPluginHandler extends Handler
         $review = [];
 
         // Stage assignments
-        $stageAssignments = \Illuminate\Support\Facades\DB::select(
+        $stageAssignments = DB::select(
             "SELECT submissions.submission_id, journals.path, submissions.last_modified::date
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
@@ -132,7 +132,7 @@ class ConfirmMembershipPluginHandler extends Handler
         }
 
         // Review assignments
-        $reviewAssignments = \Illuminate\Support\Facades\DB::select(
+        $reviewAssignments = DB::select(
             "SELECT submissions.submission_id, journals.path, review_assignments.last_modified::date
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
@@ -152,37 +152,39 @@ class ConfirmMembershipPluginHandler extends Handler
         return $review;
     }
 
+
     private function getUsersToDelete($next)
     {
         $roleNames = Application::getRoleNames();
         $amountOfUsers = $this->plugin->getSetting(PKPApplication::CONTEXT_SITE, 'amountofusers');
         $offset = $next === $amountOfUsers ? 0 : ($next - $amountOfUsers);
 
-        $userIds = \Illuminate\Support\Facades\DB::select(
+        $userIds = DB::select(
             "SELECT us1.user_id
-             FROM user_settings us1
-             JOIN users ON users.user_id = us1.user_id
-             WHERE us1.setting_name = ?
-             AND us1.user_id IN (
-                 SELECT user_id FROM user_settings WHERE setting_name = ?
-             )
-             ORDER BY us1.setting_value DESC
-             LIMIT ? OFFSET ?",
+         FROM user_settings us1
+         JOIN users ON users.user_id = us1.user_id
+         WHERE us1.setting_name = ?
+         AND us1.user_id IN (
+             SELECT user_id FROM user_settings WHERE setting_name = ?
+         )
+         ORDER BY us1.setting_value DESC
+         LIMIT ? OFFSET ?",
             [SETTING_MEMBERSHIP_MAIL_SEND, SETTING_CAN_NOT_DELETE, $amountOfUsers, $offset]
         );
 
         $deletUsers = [];
 
+        // Get contexts using DAO
+        $contextDao = Application::getContextDAO();
+        $contextsIterator = $contextDao->getAll(true);
+        $contexts = $contextsIterator->toArray();
         foreach ($userIds as $userIdObj) {
             $user = Repo::user()->get($userIdObj->user_id);
             if (!$user) continue;
 
             $deletUser = [];
             $deletUser['subscriber'] = false;
-
-            $contexts = Repo::context()->getMany(
-                Repo::context()->getCollector()
-            );
+            $hasJournalMembership = false;
 
             foreach ($contexts as $journal) {
                 // Check subscription status
@@ -198,7 +200,7 @@ class ConfirmMembershipPluginHandler extends Handler
 
                 foreach ($userGroups as $userGroup) {
                     $memberJournals = $journal->getLocalizedName();
-                    $roleId = $userGroup->getRoleId();
+                    $roleId = $userGroup->roleId; // Changed from getRoleId() to property access
                     if (isset($roleNames[$roleId])) {
                         $roles[] = __($roleNames[$roleId]);
                     }
@@ -215,11 +217,12 @@ class ConfirmMembershipPluginHandler extends Handler
                     $deletUser['assignment'] = $this->findAssignment($user->getId());
                     $deletUser['date'] = $user->getData(SETTING_MEMBERSHIP_MAIL_SEND);
                     $deletUsers[] = $deletUser;
+                    $hasJournalMembership = true;
                 }
             }
 
             // If user has no journals (only subscriber flag set)
-            if (count($deletUser) == 1) {
+            if (!$hasJournalMembership && count($deletUser) == 1) {
                 $deletUser['journals'] = 'none';
                 $deletUser['assignment'] = $this->findAssignment($user->getId());
                 $deletUser['name'] = $user->getFullName();
@@ -235,4 +238,5 @@ class ConfirmMembershipPluginHandler extends Handler
 
         return $deletUsers;
     }
+
 }

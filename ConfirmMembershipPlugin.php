@@ -21,6 +21,7 @@ use PKP\linkAction\request\AjaxModal;
 use APP\core\Application;
 use PKP\db\DAORegistry;
 use APP\plugins\generic\confirmMembership\classes\form\ConfirmMembershipPluginSettingsForm;
+use function Laravel\Prompts\error;
 
 define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
 define('SETTING_MEMBERSHIP_MAIL_SEND', 'confirmmembershipmailsend');
@@ -35,7 +36,6 @@ class ConfirmMembershipPlugin extends GenericPlugin {
         $success = parent::register($category, $path, $mainContextId);
         if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE')) return true;
         if ($success && $this->getEnabled()) {
-            Hook::add('AcronPlugin::parseCronTab', [$this, 'callbackParseCronTab']);
             Hook::add('LoadHandler', [$this, 'setPageHandler']);
         }
         return $success;
@@ -58,19 +58,6 @@ class ConfirmMembershipPlugin extends GenericPlugin {
         return ($this->getPluginPath() . DIRECTORY_SEPARATOR . 'emailTemplates.xml');
     }
 
-    /**
-     * @see AcronPlugin::parseCronTab()
-     * @param string $hookName
-     * @param array $args
-     * @return bool
-     */
-    public function callbackParseCronTab($hookName, $args) {
-        if ($this->getEnabled() || !Config::getVar('general', 'installed')) {
-            $taskFilesPath =& $args[0];
-            $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
-        }
-        return false;
-    }
 
     /**
      * @copydoc Plugin::getDisplayName()
@@ -104,7 +91,7 @@ class ConfirmMembershipPlugin extends GenericPlugin {
     public function getCanDisable() {
         $request = Application::get()->getRequest();
         $user = $request->getUser();
-        return $user && $user->hasRole([ROLE_ID_SITE_ADMIN]);
+        return $user && $user->hasRole([ROLE_ID_SITE_ADMIN], 0);
     }
 
     /**
@@ -158,13 +145,14 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                     return new JSONMessage(true);
                 }
         }
-        return parent::manage($args, $request);
+        return parent::manage(  $args, $request);
     }
 
     public function setPageHandler($hookName, $params) {
-        if ($params[0] === 'deleteusers') {
-            require_once($this->getPluginPath() . '/ConfirmMembershipPluginHandler.php');
-            define('HANDLER_CLASS', '\APP\plugins\generic\confirmMembership\ConfirmMembershipPluginHandler');
+        $page = &$params[0];
+        error_log(print_r($params, true));
+        if ($page === 'deleteusers') {
+            $params[3] = new ConfirmMembershipPluginHandler();
             return true;
         }
         return false;
