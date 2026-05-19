@@ -23,21 +23,34 @@ use DateTime;
 
 class ConfirmMembershipTask extends ScheduledTask
 {
+    /** @var object Plugin instance */
+    private $plugin;
+
+    /**
+     * Constructor
+     */
+    public function __construct($plugin)
+    {
+        parent::__construct();
+        $this->plugin = $plugin;
+    }
+
     /**
      * @copydoc ScheduledTask::executeActions()
      */
-    public function executeActions()
+    public function executeActions(): bool
     {
-        $userDao = DAORegistry::getDAO('UserDAO');
-        $journalDao = DAORegistry::getDAO('JournalDAO');
-        $pluginSettings = PluginRegistry::getPlugin('generic', 'confirmmembershipplugin');
-        $this->sendConfirmMailAndDisabled($userDao, $journalDao, $pluginSettings);
+        $this->sendConfirmMailAndDisabled($this->plugin);
         return true;
     }
 
     // Send confirm membership email to users or delete them if they have not logged in.
-    private function sendConfirmMailAndDisabled($userDao, $journalDao, $pluginSettings)
+    private function sendConfirmMailAndDisabled($pluginSettings)
     {
+        $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
+        $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
+        $contextDao = \APP\core\Application::getContextDAO();
+
         $daysSendMail = $pluginSettings->getSetting(PKPApplication::CONTEXT_SITE, 'daysmail');
         $daysmerged = $pluginSettings->getSetting(PKPApplication::CONTEXT_SITE, 'daysmerged');
         $maxusers = $pluginSettings->getSetting(PKPApplication::CONTEXT_SITE, 'maxusers');
@@ -56,8 +69,7 @@ class ConfirmMembershipTask extends ScheduledTask
         $timestamp->modify('-' . $daysmerged . ' day');
 
         $paras = [Core::getCurrentDate(), $mergesUserId, $maxusers];
-        $result = \Illuminate\Support\Facades\DB::select(
-            "SELECT user_id FROM users
+        $result = \Illuminate\Support\Facades\DB::select("SELECT user_id FROM users
              WHERE date_last_login < DATE(?) - interval '$daysSendMail days'
              AND disabled = 0
              AND user_id != ?
@@ -77,20 +89,25 @@ class ConfirmMembershipTask extends ScheduledTask
                 continue;
             } else if ($user->getData(SETTING_MEMBERSHIP_MAIL_SEND) &&
                 $timestamp > new DateTime($user->getData(SETTING_MEMBERSHIP_MAIL_SEND))) {
-                $this->mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge);
+                $this->mergeUsers($subscriptionDao, $instituSubscriptionDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge, $contextDao);
                 continue;
             }
 
-            $contexts = Repo::context()->getMany(
-                Repo::context()->getCollector()
-            );
+            // Get all contexts (journals)
+            $contexts = $contextDao->getAll(true);
 
             // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
             $memberJournals = [];
-            foreach ($contexts as $journal) {
+            while ($journal = $contexts->next()) {
                 $userGroups = Repo::userGroup()->userUserGroups($user->getId(), $journal->getId());
                 if (!empty($userGroups)) {
-                    $memberJournals[] = $journal->getLocalizedName();
+                    // Get the journal name from the database directly
+                    $journalName = $journal->getData('name');
+                    if (is_array($journalName)) {
+                        // Get the first available locale
+                        $journalName = reset($journalName);
+                    }
+                    $memberJournals[] = $journalName;
                 }
             }
 
@@ -112,9 +129,28 @@ class ConfirmMembershipTask extends ScheduledTask
                 continue;
             }
 
+            // Get template data directly without using getLocalizedData()
+            $subject = $emailTemplate->getData('subject');
+            $body = $emailTemplate->getData('body');
+
+            // Handle localized data
+            if (is_array($subject)) {
+                $subject = reset($subject);
+            }
+            if (is_array($body)) {
+                $body = reset($body);
+            }
+
+            // Replace template variables
+            $subject = str_replace('{$fullname}', $user->getFullName(), $subject);
+            $subject = str_replace('{$journal}', $journalsNames, $subject);
+
+            $body = str_replace('{$fullname}', $user->getFullName(), $body);
+            $body = str_replace('{$journal}', $journalsNames, $body);
+
             $mailable = new \PKP\mail\Mailable();
-            $mailable->subject($emailTemplate->getLocalizedData('subject'))
-                ->body($emailTemplate->getLocalizedData('body'));
+            $mailable->subject($subject)
+                ->body($body);
 
             if ($pluginSettings->getSetting(PKPApplication::CONTEXT_SITE, 'test')) {
                 $testmails = explode(';', $pluginSettings->getSetting(PKPApplication::CONTEXT_SITE, 'testemails'));
@@ -125,25 +161,20 @@ class ConfirmMembershipTask extends ScheduledTask
                 $mailable->to($user->getEmail(), $user->getFullName());
             }
 
-            // Set email variables
-            $mailable->setData([
-                'fullname' => $user->getFullName(),
-                'journal' => $journalsNames,
-            ]);
-
             try {
                 \Illuminate\Support\Facades\Mail::send($mailable);
                 $user->setData(SETTING_MEMBERSHIP_MAIL_SEND, Core::getCurrentDate());
                 Repo::user()->edit($user, []);
+                echo "Email sent to: " . $user->getEmail() . "\n";
             } catch (\Exception $e) {
                 error_log('Error sending mail to user[' . $user->getId() . ']: ' . $e->getMessage());
             }
         }
 
-        $this->resetUsersSettings($userDao);
+        $this->resetUsersSettings();
     }
 
-    private function resetUsersSettings($userDao)
+    private function resetUsersSettings()
     {
         $users = \Illuminate\Support\Facades\DB::select(
             "SELECT users.user_id
@@ -164,23 +195,19 @@ class ConfirmMembershipTask extends ScheduledTask
         }
     }
 
-    private function mergeUsers($userDao, $journalDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge)
+    private function mergeUsers($subscriptionDao, $instituSubscriptionDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge, $contextDao)
     {
-        $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO');
-        $instituSubscriptionDao = DAORegistry::getDAO('InstitutionalSubscriptionDAO');
-
         if ($this->userHasReviews($user->getId(), $jobsAutoDeleteAge) ||
             $this->userHasSubmission($user->getId(), $jobsAutoDeleteAge)) {
             $this->userCantBeDeleted($user);
             return;
         }
 
-        $contexts = Repo::context()->getMany(
-            Repo::context()->getCollector()
-        );
+        // Get all contexts (journals)
+        $contexts = $contextDao->getAll(true);
 
         // Find the name(s) of the journals the user is signed up for and check roles and subscriptions
-        foreach ($contexts as $journal) {
+        while ($journal = $contexts->next()) {
             if ($subscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId()) ||
                 $instituSubscriptionDao->subscriptionExistsByUserForJournal($user->getId(), $journal->getId())) {
                 $this->userCantBeDeleted($user);
