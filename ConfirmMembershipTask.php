@@ -100,7 +100,7 @@ class ConfirmMembershipTask extends ScheduledTask
             $memberJournals = [];
             while ($journal = $contexts->next()) {
                 $userGroups = Repo::userGroup()->userUserGroups($user->getId(), $journal->getId());
-                if (!empty($userGroups)) {
+                if (count($userGroups) !== 0) {
                     // Get the journal name from the database directly
                     $journalName = $journal->getData('name');
                     if (is_array($journalName)) {
