@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/confirmMembership/ConfirmMembershipPlugin.inc.php
+ * @file plugins/generic/confirmMembership/ConfirmMembershipPlugin.php
  *
  *
  * @class ConfirmMembershipPlugin
@@ -10,93 +10,88 @@
  * @brief confirmmembership plugin class
  */
 
-import('lib.pkp.classes.plugins.GenericPlugin');
+namespace APP\plugins\generic\confirmMembership;
+
+use PKP\plugins\GenericPlugin;
+use PKP\config\Config;
+use PKP\plugins\Hook;
+use PKP\core\JSONMessage;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
+use APP\core\Application;
+use PKP\db\DAORegistry;
+use APP\plugins\generic\confirmMembership\classes\form\ConfirmMembershipPluginSettingsForm;
+use function Laravel\Prompts\error;
+
 define("SETTING_CAN_NOT_DELETE", "membershipcannotdelete");
 define('SETTING_MEMBERSHIP_MAIL_SEND', 'confirmmembershipmailsend');
+
 class ConfirmMembershipPlugin extends GenericPlugin {
-    var $injected = false;
+    public $injected = false;
+
     /**
      * @copydoc Plugin::register()
      */
-    function register($category, $path, $mainContextId = null) {
+    public function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
         if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE')) return true;
         if ($success && $this->getEnabled()) {
-            HookRegistry::register('AcronPlugin::parseCronTab', array($this, 'callbackParseCronTab'));
-            HookRegistry::register('LoadHandler', array($this, 'setPageHandler'));
+            Hook::add('LoadHandler', [$this, 'setPageHandler']);
         }
         return $success;
     }
-    function setEnabled($enabled) {
-        if ($enabled) {
-            $emailFile = $this->getPluginPath() . "/locale/en_US/emails.po";
-            AppLocale::registerLocaleFile('en_US', $emailFile);
-            $emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
-            /* @var $emailTemplateDao EmailTemplateDAO */
-            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
-            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en_US'], false, 'COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP');
-        }
-      parent::setEnabled($enabled);
 
+    public function setEnabled($enabled) {
+        if ($enabled) {
+            $emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
+            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en'], false, 'COMFIRMMEMBERSHIP_MEMBERSHIP');
+            $emailTemplateDao->installEmailTemplates($this->getInstallEmailTemplatesFile(), ['en'], false, 'COMFIRMMEMBERSHIP_NO_JOURNALS_MEMBERSHIP');
+        }
+        parent::setEnabled($enabled);
     }
-    function getInstallSitePluginSettingsFile() {
+
+    public function getInstallSitePluginSettingsFile() {
         return $this->getPluginPath() . '/settings.xml';
     }
-    function getInstallEmailTemplatesFile() {
+
+    public function getInstallEmailTemplatesFile() {
         return ($this->getPluginPath() . DIRECTORY_SEPARATOR . 'emailTemplates.xml');
     }
-    /**
-     * @see AcronPlugin::parseCronTab()
-     * @param $hookName string
-     * @param $args array [
-     *  @option array Task files paths
-     * ]
-     * @return bolean
-     */
-    function callbackParseCronTab($hookName, $args) {
-        if ($this->getEnabled() || !Config::getVar('general', 'installed')) {
-            $taskFilesPath =& $args[0];
-            $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
-        }
-        return false;
-    }
+
+
     /**
      * @copydoc Plugin::getDisplayName()
      */
-    function getDisplayName() {
+    public function getDisplayName() {
         return __('plugins.generic.confirmmembership.display.name');
     }
 
     /**
      * @copydoc Plugin::getDescription()
      */
-    function getDescription() {
+    public function getDescription() {
         return __('plugins.generic.confirmmembership.description');
     }
 
-    function getContextSpecificPluginSettingsFile() {
+    public function getContextSpecificPluginSettingsFile() {
         return $this->getPluginPath() . '/settings.xml';
     }
 
-    function getCanEnable()
-    {
+    public function getCanEnable() {
         return true;
     }
-
 
     /**
      * @see Plugin::isSitePlugin()
      */
-    function isSitePlugin() {
+    public function isSitePlugin() {
         return true;
     }
-    function getCanDisable() {
-        if (Validation::isSiteAdmin()) {
-            return true;
-        }
-        else {
-            return false;
-        }
+
+    public function getCanDisable() {
+        $request = Application::get()->getRequest();
+        $user = $request->getUser();
+        return $user && $user->hasRole([ROLE_ID_SITE_ADMIN], 0);
     }
 
     /**
@@ -112,7 +107,6 @@ class ConfirmMembershipPlugin extends GenericPlugin {
         // Create a LinkAction that will call the plugin's
         // `manage` method with the `settings` verb.
         $router = $request->getRouter();
-        import('lib.pkp.classes.linkAction.request.AjaxModal');
         $linkAction = new LinkAction(
             'settings',
             new AjaxModal(
@@ -122,11 +116,11 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                     null,
                     'manage',
                     null,
-                    array(
+                    [
                         'verb' => 'settings',
                         'plugin' => $this->getName(),
                         'category' => 'generic'
-                    )
+                    ]
                 ),
                 $this->getDisplayName()
             ),
@@ -140,7 +134,6 @@ class ConfirmMembershipPlugin extends GenericPlugin {
     public function manage($args, $request) {
         switch ($request->getUserVar('verb')) {
             case 'settings':
-                $this->import('classes.form.ConfirmMembershipPluginSettingsForm');
                 $form = new ConfirmMembershipPluginSettingsForm($this);
                 if (!$request->getUserVar('save')) {
                     $form->initData();
@@ -152,16 +145,16 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                     return new JSONMessage(true);
                 }
         }
-        return parent::manage($args, $request);
+        return parent::manage(  $args, $request);
     }
 
     public function setPageHandler($hookName, $params) {
-        if ($params[0] === 'deleteusers') {
-            $this->import('ConfirmMembershipPluginHandler');
-            define('HANDLER_CLASS', 'ConfirmMembershipPluginHandler');
+        $page = &$params[0];
+        error_log(print_r($params, true));
+        if ($page === 'deleteusers') {
+            $params[3] = new ConfirmMembershipPluginHandler();
             return true;
         }
         return false;
     }
 }
-
