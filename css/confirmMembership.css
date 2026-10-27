@@ -1,0 +1,157 @@
+/**
+ * Table styling based on the KB design system (design.kb.dk, molecules-tables-table)
+ */
+.cm-page {
+	--cm-primary: #002e70;
+	--cm-text: #171717;
+	--cm-muted: #757575;
+	--cm-border: #757575;
+	--cm-hover: #f2f4f8;
+	--cm-badge: #96e2fd;
+	color: var(--cm-text);
+	font-family: "noway", "Noto Sans", Arial, sans-serif;
+	letter-spacing: -.0125rem;
+}
+
+.cm-page .table-responsive {
+	display: block;
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.cm-page table.table,
+.cm-page table.table.dataTable {
+	width: 100%;
+	margin-bottom: 1rem;
+	border-collapse: collapse;
+	color: var(--cm-text);
+	font-size: .9375rem;
+	line-height: 1.5;
+}
+
+.cm-page table.table caption {
+	caption-side: top;
+	padding: 0 0 .75rem;
+	text-align: left;
+	color: var(--cm-muted);
+	font-size: .875rem;
+}
+
+.cm-page table.table th,
+.cm-page table.table td,
+.cm-page table.table.dataTable > thead > tr > th,
+.cm-page table.table.dataTable > tbody > tr > td {
+	padding: .75rem;
+	border-top: 1px solid var(--cm-border);
+	border-bottom: 0;
+	vertical-align: top;
+	text-align: left;
+}
+
+.cm-page table.table thead th,
+.cm-page table.table.dataTable > thead > tr > th {
+	border-top: 0;
+	border-bottom: 1px solid var(--cm-border);
+	color: var(--cm-muted);
+	font-size: .875rem;
+	font-weight: 400;
+	vertical-align: bottom;
+	white-space: nowrap;
+}
+
+.cm-page table.table tr:last-of-type {
+	border-bottom: 1px solid var(--cm-border);
+}
+
+.cm-page table.table-hover tbody tr:hover,
+.cm-page table.table.dataTable.table-hover > tbody > tr:hover > * {
+	background-color: var(--cm-hover);
+	box-shadow: none;
+}
+
+.cm-page table.table a {
+	color: var(--cm-text);
+	text-decoration: underline;
+}
+
+.cm-page table.table a:hover,
+.cm-page table.table a:focus {
+	color: var(--cm-primary);
+}
+
+.cm-page .cm-nowrap {
+	white-space: nowrap;
+}
+
+.cm-page .cm-muted {
+	color: var(--cm-muted);
+}
+
+/* Assignment list: compact, wrapping dates */
+.cm-page .cm-assignments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .25rem .75rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.cm-page .cm-assignments li {
+	white-space: nowrap;
+}
+
+.cm-page details > summary {
+	cursor: pointer;
+	color: var(--cm-primary);
+	margin-bottom: .5rem;
+}
+
+.cm-page .badge {
+	display: inline-block;
+	padding: .25em .5rem;
+	border-radius: .25rem;
+	background-color: var(--cm-badge);
+	color: #212529;
+	font-size: .75rem;
+	line-height: 1;
+	vertical-align: baseline;
+	white-space: nowrap;
+}
+
+/* Buttons */
+.cm-page .btn {
+	display: inline-block;
+	padding: .5rem 1.25rem;
+	border: 1px solid var(--cm-primary);
+	border-radius: .25rem;
+	background-color: transparent;
+	color: var(--cm-primary);
+	font: inherit;
+	font-size: .875rem;
+	line-height: 1.25rem;
+	text-decoration: none;
+	cursor: pointer;
+	transition: color .15s ease-in-out, background-color .15s ease-in-out;
+}
+
+.cm-page .btn:hover,
+.cm-page .btn:focus,
+.cm-page .btn-primary {
+	background-color: var(--cm-primary);
+	color: #fff;
+}
+
+.cm-page .btn-primary:hover,
+.cm-page .btn-primary:focus {
+	background-color: #001f4d;
+	border-color: #001f4d;
+}
+
+.cm-page .cm-pagination {
+	display: flex;
+	justify-content: flex-end;
+	gap: .5rem;
+	margin-top: 1.25rem;
+}
