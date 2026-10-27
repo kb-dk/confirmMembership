@@ -15,6 +15,7 @@ namespace APP\plugins\generic\confirmMembership;
 use PKP\plugins\GenericPlugin;
 use PKP\config\Config;
 use PKP\plugins\Hook;
+use PKP\services\PKPSchemaService;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
@@ -37,6 +38,9 @@ class ConfirmMembershipPlugin extends GenericPlugin {
         if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE')) return true;
         if ($success && $this->getEnabled()) {
             Hook::add('LoadHandler', [$this, 'setPageHandler']);
+            Hook::add('Schema::get::user', [$this, 'addUserSchemaProperties']);
+            // The user schema may already be cached (session user) before generic plugins load
+            app()->get('schema')->get(PKPSchemaService::SCHEMA_USER, true);
         }
         return $success;
     }
@@ -146,6 +150,24 @@ class ConfirmMembershipPlugin extends GenericPlugin {
                 }
         }
         return parent::manage(  $args, $request);
+    }
+
+    /**
+     * OJS 3.5 only loads/saves user_settings that are declared in the user schema
+     */
+    public function addUserSchemaProperties($hookName, $params) {
+        $schema = &$params[0];
+        $schema->properties->{SETTING_MEMBERSHIP_MAIL_SEND} = (object) [
+            'type' => 'string',
+            'apiSummary' => false,
+            'validation' => ['nullable'],
+        ];
+        $schema->properties->{SETTING_CAN_NOT_DELETE} = (object) [
+            'type' => 'boolean',
+            'apiSummary' => false,
+            'validation' => ['nullable'],
+        ];
+        return false;
     }
 
     public function setPageHandler($hookName, $params) {

@@ -92,6 +92,7 @@ class ConfirmMembershipPluginHandler extends Handler
             'users' => $users,
             'next' => $next,
             'show' => $amountOfUsers,
+            'pluginCssUrl' => $request->getBaseUrl() . '/' . $this->plugin->getPluginPath() . '/css/confirmMembership.css',
             'mergesUser' => __('plugins.generic.confirmmembership.mergeuserpopup',
                 ['merge_user' => $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername')]
             ),
@@ -215,7 +216,7 @@ class ConfirmMembershipPluginHandler extends Handler
                     $deletUser['role'] = implode(', ', $roles);
                     $deletUser['link'] = '/index.php/' . $journal->getData('urlPath') . '/management/settings/access';
                     $deletUser['assignment'] = $this->findAssignment($user->getId());
-                    $deletUser['date'] = $user->getData(SETTING_MEMBERSHIP_MAIL_SEND);
+                    $deletUser['date'] = substr((string) $user->getData(SETTING_MEMBERSHIP_MAIL_SEND), 0, 10);
                     $deletUsers[] = $deletUser;
                     $hasJournalMembership = true;
                 }
@@ -231,7 +232,7 @@ class ConfirmMembershipPluginHandler extends Handler
                 $deletUser['role'] = '';
                 $deletUser['link'] = '';
                 $deletUser['userid'] = $user->getId();
-                $deletUser['date'] = $user->getData(SETTING_MEMBERSHIP_MAIL_SEND);
+                $deletUser['date'] = substr((string) $user->getData(SETTING_MEMBERSHIP_MAIL_SEND), 0, 10);
                 $deletUsers[] = $deletUser;
             }
         }
