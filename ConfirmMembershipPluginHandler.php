@@ -106,6 +106,7 @@ class ConfirmMembershipPluginHandler extends Handler
             'users' => $users,
             'next' => $next,
             'show' => $amountOfUsers,
+            'pluginCss' => (string) file_get_contents(__DIR__ . '/css/confirmMembership.css'),
             'mergesUser' => __('plugins.generic.confirmmembership.mergeuserpopup',
                 ['merge_user' => $this->plugin->getSetting(CONTEXT_SITE, 'mergeusername')]
             ),
@@ -128,9 +129,11 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $assignments = [];
 
-        // Fetching stage assignments for the user
+        // Fetching stage assignments for the user.
+        // Uses submissions.last_modified, the same date ConfirmMembershipTask::userHasSubmission()
+        // uses to decide whether the user can be deleted.
         $result = DB::select(
-            'SELECT s.submission_id, p.path, sa.date_assigned::date
+            'SELECT s.submission_id, p.path, s.last_modified::date AS last_modified
          FROM presses p
          JOIN submissions s ON s.context_id = p.press_id
          JOIN stage_assignments sa ON sa.submission_id = s.submission_id
@@ -141,12 +144,13 @@ class ConfirmMembershipPluginHandler extends Handler
         foreach ($result as $row) {
             $assignments[] = [
                 'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
-                'date' => $row->date_assigned,
+                'date' => $row->last_modified,
                 'review' => false,
             ];
         }
 
-        // Fetching review assignments for the user
+        // Fetching review assignments for the user.
+        // Uses review_assignments.last_modified, the same date ConfirmMembershipTask::userHasReviews() uses.
         $result = $this->stageAssignmentDao->retrieve(
             'SELECT s.submission_id, p.path, ra.last_modified::date
          FROM presses p
@@ -232,7 +236,6 @@ class ConfirmMembershipPluginHandler extends Handler
             if (empty($userData)) {
                 $deleteUsers[] = [
                     'presses' => 'none',
-                    'subscriber' => false,
                     'assignment' => $this->findAssignment($user->getId()),
                     'name' => $user->getFullName(),
                     'username' => $user->getUsername(),
