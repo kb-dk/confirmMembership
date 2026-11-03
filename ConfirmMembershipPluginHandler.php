@@ -13,6 +13,7 @@ use PKP\classes\user\UserAction;
 use PKP\classes\core\AppLocale;
 use PKP\plugins\PluginRegistry;
 use PKP\db\DAORegistry;
+use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\security\Role;
 use APP\template\TemplateManager;
 use PKP\security\authorization\PKPSiteAccessPolicy;
@@ -128,14 +129,38 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $assignments = [];
 
-        // Fetching stage assignments for the user
+        // Fetching stage assignments for the user.
+        // stage_assignments.date_assigned is overwritten by StageAssignmentDAO::updateObject()
+        // (e.g. when a role is saved or users are merged), so the date is taken from event_log:
+        // 1. when the user was added as participant (matched on username in event_log_settings),
+        // 2. otherwise when the user submitted the submission,
+        // 3. otherwise fall back to stage_assignments.date_assigned.
         $result = DB::select(
-            'SELECT s.submission_id, p.path, sa.date_assigned::date
+            "SELECT s.submission_id, p.path,
+                COALESCE(
+                    (SELECT MIN(el.date_logged)
+                       FROM event_log el
+                       JOIN event_log_settings els ON els.log_id = el.log_id AND els.setting_name = 'username'
+                      WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id
+                        AND el.event_type = ? AND els.setting_value = u.username),
+                    (SELECT MIN(el.date_logged)
+                       FROM event_log el
+                      WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id
+                        AND el.event_type = ? AND el.user_id = sa.user_id),
+                    sa.date_assigned
+                )::date AS date_assigned
          FROM presses p
          JOIN submissions s ON s.context_id = p.press_id
          JOIN stage_assignments sa ON sa.submission_id = s.submission_id
-         WHERE sa.user_id = ?',
-            [$userId]
+         JOIN users u ON u.user_id = sa.user_id
+         WHERE sa.user_id = ?",
+            [
+                Application::ASSOC_TYPE_SUBMISSION,
+                PKPSubmissionEventLogEntry::SUBMISSION_LOG_ADD_PARTICIPANT,
+                Application::ASSOC_TYPE_SUBMISSION,
+                PKPSubmissionEventLogEntry::SUBMISSION_LOG_SUBMISSION_SUBMIT,
+                $userId,
+            ]
         );
 
         foreach ($result as $row) {
