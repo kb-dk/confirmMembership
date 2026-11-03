@@ -71,10 +71,7 @@ msgid "plugins.generic.confirmmembership.assignment"
 msgstr "Opgave"
 
 msgid "plugins.generic.confirmmembership.journals"
-msgstr "Presses"
-
-msgid "plugins.generic.confirmmembership.subscriber"
-msgstr "Abonnent"
+msgstr "Tidsskrift"
 
 msgid "plugins.generic.confirmmembership.link"
 msgstr "Link til bruger"
@@ -93,3 +90,6 @@ msgstr "Jobs ældre den den angivet alder slettes"
 
 msgid "plugins.generic.confirmmembership.mergeuserpopup"
 msgstr "Er du sikker på, at du vil flette denne bruger {$merge_user}?"
+
+msgid "plugins.generic.confirmmembership.showall"
+msgstr "Vis alle {$amount} opgaver"
