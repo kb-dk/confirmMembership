@@ -22,6 +22,9 @@
 			{fbvElement type="text" id="daysmerged" value=$daysmerged label="plugins.generic.confirmmembership.daysmerged" }
 		{/fbvFormSection}
 		{fbvFormSection}
+			{fbvElement type="text" id="jobsautodelete" value=$jobsautodelete label="plugins.generic.confirmmembership.jobsautodelete" }
+		{/fbvFormSection}
+		{fbvFormSection}
 			{fbvElement type="text" id="mergeusername" value=$mergeusername label="plugins.generic.confirmmembership.mergeusername" }
 		{/fbvFormSection}
 
