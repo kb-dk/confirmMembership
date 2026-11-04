@@ -90,3 +90,6 @@ msgstr "Side med liste over brugere der ikke automatisk kan slettes"
 
 msgid "plugins.generic.confirmmembership.jobsautodelete"
 msgstr "Hvor mange dage må et job være gammel før vi auto sletter brugeren"
+
+msgid "plugins.generic.confirmmembership.showall"
+msgstr "Vis alle ({$count})"
