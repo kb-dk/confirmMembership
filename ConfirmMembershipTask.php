@@ -35,6 +35,7 @@ class ConfirmMembershipTask extends ScheduledTask {
         $pressDao = DAORegistry::getDAO('PressDAO'); /* @var $pressDao pressDAO */
         $pluginSettings = new ConfirmMembershipPlugin();
         $this->sendConfirmMailAndDisabled($userDao, $pressDao, $pluginSettings);
+        return true;
     }
 
     // Send confirm membership email to users or delete them if they have not logged in.
