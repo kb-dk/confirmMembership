@@ -102,12 +102,6 @@
 	white-space: nowrap;
 }
 
-.cm-page details > summary {
-	cursor: pointer;
-	color: var(--cm-primary);
-	margin-bottom: .5rem;
-}
-
 .cm-page .badge {
 	display: inline-block;
 	padding: .25em .5rem;
