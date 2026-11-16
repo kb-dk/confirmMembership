@@ -6,6 +6,7 @@ use APP\core\Application;
 use APP\core\Request;
 use APP\facades\Repo;
 use APP\handler\Handler;
+use APP\log\event\SubmissionEventLogEntry;
 use APP\template\TemplateManager;
 use PKP\core\PKPApplication;
 use PKP\db\DAORegistry;
@@ -114,14 +115,35 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $review = [];
 
+        // Latest event_log entry made by the user on a submission, including events on its files.
+        // Used as "last activity" date. Parameters: ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SUBMISSION_FILE, user id.
+        $lastActivitySql = '(SELECT MAX(el.date_logged)
+              FROM event_log el
+              WHERE el.user_id = ?
+                AND (
+                    (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                    OR (el.assoc_type = ? AND el.assoc_id IN (
+                        SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                    ))
+                ))';
+        $lastActivityParams = [
+            $userId,
+            Application::ASSOC_TYPE_SUBMISSION,
+            Application::ASSOC_TYPE_SUBMISSION_FILE,
+        ];
+
         // Stage assignments
+        // Date = latest event_log entry by the user on the submission; falls back to the
+        // assignment date if the user has no log entries.
         $stageAssignments = DB::select(
-            "SELECT submissions.submission_id, journals.path, submissions.last_modified::date
+            'SELECT submissions.submission_id, journals.path,
+                COALESCE(' . $lastActivitySql . ', MIN(stage_assignments.date_assigned))::date AS last_modified
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN stage_assignments ON submissions.submission_id = stage_assignments.submission_id
-             WHERE stage_assignments.user_id = ?",
-            [$userId]
+             WHERE stage_assignments.user_id = ?
+             GROUP BY submissions.submission_id, journals.path',
+            [...$lastActivityParams, $userId]
         );
 
         foreach ($stageAssignments as $submission) {
@@ -133,13 +155,36 @@ class ConfirmMembershipPluginHandler extends Handler
         }
 
         // Review assignments
+        // Declined review: date of the decline event (fallback: review_assignments.date_confirmed).
+        // Otherwise: latest event_log entry by the user on the submission (fallback: review_assignments.last_modified).
         $reviewAssignments = DB::select(
-            "SELECT submissions.submission_id, journals.path, review_assignments.last_modified::date
+            'SELECT submissions.submission_id, journals.path,
+                (CASE WHEN review_assignments.declined = 1 THEN
+                    COALESCE(
+                        (SELECT MAX(el.date_logged)
+                           FROM event_log el
+                           JOIN event_log_settings els ON els.log_id = el.log_id
+                          WHERE el.event_type = ?
+                            AND el.assoc_type = ?
+                            AND el.assoc_id = submissions.submission_id
+                            AND els.setting_name = \'reviewAssignmentId\'
+                            AND els.setting_value = review_assignments.review_id::text),
+                        review_assignments.date_confirmed,
+                        review_assignments.last_modified
+                    )
+                 ELSE
+                    COALESCE(' . $lastActivitySql . ', review_assignments.last_modified)
+                 END)::date AS last_modified
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN review_assignments ON submissions.submission_id = review_assignments.submission_id
-             WHERE review_assignments.reviewer_id = ?",
-            [$userId]
+             WHERE review_assignments.reviewer_id = ?',
+            [
+                SubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_DECLINE,
+                Application::ASSOC_TYPE_SUBMISSION,
+                ...$lastActivityParams,
+                $userId,
+            ]
         );
 
         foreach ($reviewAssignments as $submission) {
