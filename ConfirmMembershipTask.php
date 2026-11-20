@@ -16,6 +16,7 @@ use PKP\scheduledTask\ScheduledTask;
 use PKP\db\DAORegistry;
 use PKP\core\Core;
 use PKP\core\PKPApplication;
+use APP\core\Application;
 use APP\facades\Repo;
 use PKP\mail\MailService;
 use PKP\plugins\PluginRegistry;
@@ -233,28 +234,87 @@ class ConfirmMembershipTask extends ScheduledTask
         return true;
     }
 
+    /**
+     * Subquery returning the latest event_log entry made by the user on a submission,
+     * including events on its files. Same logic as ConfirmMembershipPluginHandler::findAssignment().
+     * Parameters: user id, ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SUBMISSION_FILE.
+     */
+    private function lastActivitySql(): string
+    {
+        return '(SELECT MAX(el.date_logged)
+              FROM event_log el
+              WHERE el.user_id = ?
+                AND (
+                    (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                    OR (el.assoc_type = ? AND el.assoc_id IN (
+                        SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                    ))
+                ))';
+    }
+
+    private function lastActivityParams($userId): array
+    {
+        return [
+            $userId,
+            Application::ASSOC_TYPE_SUBMISSION,
+            Application::ASSOC_TYPE_SUBMISSION_FILE,
+        ];
+    }
+
+    /**
+     * Latest event_log entry (by any user) on a submission the user has been assigned to review,
+     * including events on its files.
+     */
     private function userHasReviews($userId, $jobsAutoDeleteAge)
     {
         $result = \Illuminate\Support\Facades\DB::select(
-            "SELECT count(*) AS row_count
-             FROM review_assignments
-             WHERE reviewer_id = ?
-             AND last_modified > DATE(?) - interval '$jobsAutoDeleteAge days'",
-            [$userId, Core::getCurrentDate()]
+            'SELECT count(*) AS row_count
+             FROM (
+                SELECT (SELECT MAX(el.date_logged)
+                          FROM event_log el
+                         WHERE (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                            OR (el.assoc_type = ? AND el.assoc_id IN (
+                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                            ))
+                       ) AS activity_date
+                FROM review_assignments
+                JOIN submissions ON submissions.submission_id = review_assignments.submission_id
+                WHERE review_assignments.reviewer_id = ?
+             ) reviews
+             WHERE activity_date > DATE(?) - make_interval(days => ?)',
+            [
+                Application::ASSOC_TYPE_SUBMISSION,
+                Application::ASSOC_TYPE_SUBMISSION_FILE,
+                $userId,
+                Core::getCurrentDate(),
+                (int) $jobsAutoDeleteAge,
+            ]
         );
 
         return $result && isset($result[0]) ? (bool) $result[0]->row_count : false;
     }
 
+    /**
+     * Latest event_log entry by the user on the submission (fallback: assignment date).
+     */
     private function userHasSubmission($userId, $jobsAutoDeleteAge)
     {
         $result = \Illuminate\Support\Facades\DB::select(
-            "SELECT count(*) AS row_count
-             FROM stage_assignments
-             JOIN submissions ON stage_assignments.submission_id = submissions.submission_id
-             WHERE last_modified > DATE(?) - interval '$jobsAutoDeleteAge days'
-             AND user_id = ?",
-            [Core::getCurrentDate(), $userId]
+            'SELECT count(*) AS row_count
+             FROM (
+                SELECT COALESCE(' . $this->lastActivitySql() . ', MIN(stage_assignments.date_assigned)) AS activity_date
+                FROM stage_assignments
+                JOIN submissions ON stage_assignments.submission_id = submissions.submission_id
+                WHERE stage_assignments.user_id = ?
+                GROUP BY submissions.submission_id
+             ) stages
+             WHERE activity_date > DATE(?) - make_interval(days => ?)',
+            [
+                ...$this->lastActivityParams($userId),
+                $userId,
+                Core::getCurrentDate(),
+                (int) $jobsAutoDeleteAge,
+            ]
         );
 
         return $result && isset($result[0]) ? (bool) $result[0]->row_count : false;

@@ -114,14 +114,35 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $review = [];
 
+        // Latest event_log entry made by the user on a submission, including events on its files.
+        // Used as "last activity" date. Parameters: ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SUBMISSION_FILE, user id.
+        $lastActivitySql = '(SELECT MAX(el.date_logged)
+              FROM event_log el
+              WHERE el.user_id = ?
+                AND (
+                    (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                    OR (el.assoc_type = ? AND el.assoc_id IN (
+                        SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                    ))
+                ))';
+        $lastActivityParams = [
+            $userId,
+            Application::ASSOC_TYPE_SUBMISSION,
+            Application::ASSOC_TYPE_SUBMISSION_FILE,
+        ];
+
         // Stage assignments
+        // Date = latest event_log entry by the user on the submission; falls back to the
+        // assignment date if the user has no log entries.
         $stageAssignments = DB::select(
-            "SELECT submissions.submission_id, journals.path, submissions.last_modified::date
+            'SELECT submissions.submission_id, journals.path,
+                COALESCE(' . $lastActivitySql . ', MIN(stage_assignments.date_assigned))::date AS last_modified
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN stage_assignments ON submissions.submission_id = stage_assignments.submission_id
-             WHERE stage_assignments.user_id = ?",
-            [$userId]
+             WHERE stage_assignments.user_id = ?
+             GROUP BY submissions.submission_id, journals.path',
+            [...$lastActivityParams, $userId]
         );
 
         foreach ($stageAssignments as $submission) {
@@ -133,19 +154,31 @@ class ConfirmMembershipPluginHandler extends Handler
         }
 
         // Review assignments
+        // Date = latest event_log entry on the submission (by any user), including events on its files.
         $reviewAssignments = DB::select(
-            "SELECT submissions.submission_id, journals.path, review_assignments.last_modified::date
+            'SELECT submissions.submission_id, journals.path,
+                (SELECT MAX(el.date_logged)
+                   FROM event_log el
+                  WHERE (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                     OR (el.assoc_type = ? AND el.assoc_id IN (
+                         SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                     ))
+                )::date AS last_event_date
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN review_assignments ON submissions.submission_id = review_assignments.submission_id
-             WHERE review_assignments.reviewer_id = ?",
-            [$userId]
+             WHERE review_assignments.reviewer_id = ?',
+            [
+                Application::ASSOC_TYPE_SUBMISSION,
+                Application::ASSOC_TYPE_SUBMISSION_FILE,
+                $userId,
+            ]
         );
 
         foreach ($reviewAssignments as $submission) {
             $review[] = [
                 'url' => '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1',
-                'date' => $submission->last_modified,
+                'date' => $submission->last_event_date,
                 'review' => true
             ];
         }
