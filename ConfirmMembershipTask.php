@@ -17,7 +17,6 @@ use PKP\db\DAORegistry;
 use PKP\core\Core;
 use PKP\core\PKPApplication;
 use APP\core\Application;
-use APP\log\event\SubmissionEventLogEntry;
 use APP\facades\Repo;
 use PKP\mail\MailService;
 use PKP\plugins\PluginRegistry;
@@ -263,38 +262,20 @@ class ConfirmMembershipTask extends ScheduledTask
     }
 
     /**
-     * Declined review: date of the decline event (fallback: date_confirmed, then last_modified).
-     * Otherwise: latest event_log entry by the user on the submission (fallback: last_modified).
+     * Latest event_log entry by the user on a submission they have been assigned to review.
      */
     private function userHasReviews($userId, $jobsAutoDeleteAge)
     {
         $result = \Illuminate\Support\Facades\DB::select(
             'SELECT count(*) AS row_count
              FROM (
-                SELECT (CASE WHEN review_assignments.declined = 1 THEN
-                        COALESCE(
-                            (SELECT MAX(el.date_logged)
-                               FROM event_log el
-                               JOIN event_log_settings els ON els.log_id = el.log_id
-                              WHERE el.event_type = ?
-                                AND el.assoc_type = ?
-                                AND el.assoc_id = submissions.submission_id
-                                AND els.setting_name = \'reviewAssignmentId\'
-                                AND els.setting_value = review_assignments.review_id::text),
-                            review_assignments.date_confirmed,
-                            review_assignments.last_modified
-                        )
-                     ELSE
-                        COALESCE(' . $this->lastActivitySql() . ', review_assignments.last_modified)
-                     END) AS activity_date
+                SELECT ' . $this->lastActivitySql() . ' AS activity_date
                 FROM review_assignments
                 JOIN submissions ON submissions.submission_id = review_assignments.submission_id
                 WHERE review_assignments.reviewer_id = ?
              ) reviews
              WHERE activity_date > DATE(?) - make_interval(days => ?)',
             [
-                SubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_DECLINE,
-                Application::ASSOC_TYPE_SUBMISSION,
                 ...$this->lastActivityParams($userId),
                 $userId,
                 Core::getCurrentDate(),

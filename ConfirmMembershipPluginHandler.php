@@ -6,7 +6,6 @@ use APP\core\Application;
 use APP\core\Request;
 use APP\facades\Repo;
 use APP\handler\Handler;
-use APP\log\event\SubmissionEventLogEntry;
 use APP\template\TemplateManager;
 use PKP\core\PKPApplication;
 use PKP\db\DAORegistry;
@@ -155,33 +154,15 @@ class ConfirmMembershipPluginHandler extends Handler
         }
 
         // Review assignments
-        // Declined review: date of the decline event (fallback: review_assignments.date_confirmed).
-        // Otherwise: latest event_log entry by the user on the submission (fallback: review_assignments.last_modified).
+        // Date = latest event_log entry by the user on the submission.
         $reviewAssignments = DB::select(
             'SELECT submissions.submission_id, journals.path,
-                (CASE WHEN review_assignments.declined = 1 THEN
-                    COALESCE(
-                        (SELECT MAX(el.date_logged)
-                           FROM event_log el
-                           JOIN event_log_settings els ON els.log_id = el.log_id
-                          WHERE el.event_type = ?
-                            AND el.assoc_type = ?
-                            AND el.assoc_id = submissions.submission_id
-                            AND els.setting_name = \'reviewAssignmentId\'
-                            AND els.setting_value = review_assignments.review_id::text),
-                        review_assignments.date_confirmed,
-                        review_assignments.last_modified
-                    )
-                 ELSE
-                    COALESCE(' . $lastActivitySql . ', review_assignments.last_modified)
-                 END)::date AS last_modified
+                ' . $lastActivitySql . '::date AS last_modified
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN review_assignments ON submissions.submission_id = review_assignments.submission_id
              WHERE review_assignments.reviewer_id = ?',
             [
-                SubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_DECLINE,
-                Application::ASSOC_TYPE_SUBMISSION,
                 ...$lastActivityParams,
                 $userId,
             ]
