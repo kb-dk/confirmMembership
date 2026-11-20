@@ -154,16 +154,23 @@ class ConfirmMembershipPluginHandler extends Handler
         }
 
         // Review assignments
-        // Date = latest event_log entry by the user on the submission.
+        // Date = latest event_log entry on the submission (by any user), including events on its files.
         $reviewAssignments = DB::select(
             'SELECT submissions.submission_id, journals.path,
-                ' . $lastActivitySql . '::date AS last_modified
+                (SELECT MAX(el.date_logged)
+                   FROM event_log el
+                  WHERE (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                     OR (el.assoc_type = ? AND el.assoc_id IN (
+                         SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                     ))
+                )::date AS last_modified
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN review_assignments ON submissions.submission_id = review_assignments.submission_id
              WHERE review_assignments.reviewer_id = ?',
             [
-                ...$lastActivityParams,
+                Application::ASSOC_TYPE_SUBMISSION,
+                Application::ASSOC_TYPE_SUBMISSION_FILE,
                 $userId,
             ]
         );

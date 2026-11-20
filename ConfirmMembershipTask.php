@@ -262,21 +262,29 @@ class ConfirmMembershipTask extends ScheduledTask
     }
 
     /**
-     * Latest event_log entry by the user on a submission they have been assigned to review.
+     * Latest event_log entry (by any user) on a submission the user has been assigned to review,
+     * including events on its files.
      */
     private function userHasReviews($userId, $jobsAutoDeleteAge)
     {
         $result = \Illuminate\Support\Facades\DB::select(
             'SELECT count(*) AS row_count
              FROM (
-                SELECT ' . $this->lastActivitySql() . ' AS activity_date
+                SELECT (SELECT MAX(el.date_logged)
+                          FROM event_log el
+                         WHERE (el.assoc_type = ? AND el.assoc_id = submissions.submission_id)
+                            OR (el.assoc_type = ? AND el.assoc_id IN (
+                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
+                            ))
+                       ) AS activity_date
                 FROM review_assignments
                 JOIN submissions ON submissions.submission_id = review_assignments.submission_id
                 WHERE review_assignments.reviewer_id = ?
              ) reviews
              WHERE activity_date > DATE(?) - make_interval(days => ?)',
             [
-                ...$this->lastActivityParams($userId),
+                Application::ASSOC_TYPE_SUBMISSION,
+                Application::ASSOC_TYPE_SUBMISSION_FILE,
                 $userId,
                 Core::getCurrentDate(),
                 (int) $jobsAutoDeleteAge,
