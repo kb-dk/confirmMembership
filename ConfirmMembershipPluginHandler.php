@@ -163,7 +163,7 @@ class ConfirmMembershipPluginHandler extends Handler
                      OR (el.assoc_type = ? AND el.assoc_id IN (
                          SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = submissions.submission_id
                      ))
-                )::date AS last_modified
+                )::date AS last_event_date
              FROM journals
              JOIN submissions ON submissions.context_id = journals.journal_id
              JOIN review_assignments ON submissions.submission_id = review_assignments.submission_id
@@ -178,7 +178,7 @@ class ConfirmMembershipPluginHandler extends Handler
         foreach ($reviewAssignments as $submission) {
             $review[] = [
                 'url' => '/index.php/' . $submission->path . '/workflow/index/' . $submission->submission_id . '/1',
-                'date' => $submission->last_modified,
+                'date' => $submission->last_event_date,
                 'review' => true
             ];
         }
