@@ -62,26 +62,16 @@
                             <td>{$user['role']|escape}</td>
                             <td>
                                 {if !empty($user['assignment'])}
-                                    {capture assign="assignmentList"}
-                                        <ul class="cm-assignments">
-                                            {foreach $user['assignment'] as $ass}
-                                                <li>
-                                                    <a href="{$ass['url']|escape}" target="_blank">{$ass['date']|escape}</a>
-                                                    {if $ass['review']}
-                                                        <span class="badge">{translate key="plugins.generic.confirmmembership.review"}</span>
-                                                    {/if}
-                                                </li>
-                                            {/foreach}
-                                        </ul>
-                                    {/capture}
-                                    {if $user['assignment']|@count > 6}
-                                        <details>
-                                            <summary>{translate key="plugins.generic.confirmmembership.showall" amount=$user['assignment']|@count}</summary>
-                                            {$assignmentList}
-                                        </details>
-                                    {else}
-                                        {$assignmentList}
-                                    {/if}
+                                    <ul class="cm-assignments">
+                                        {foreach $user['assignment'] as $ass}
+                                            <li>
+                                                <a href="{$ass['url']|escape}" target="_blank">{$ass['date']|escape}</a>
+                                                {if $ass['review']}
+                                                    <span class="badge">{translate key="plugins.generic.confirmmembership.review"}</span>
+                                                {/if}
+                                            </li>
+                                        {/foreach}
+                                    </ul>
                                 {/if}
                             </td>
                             <td>

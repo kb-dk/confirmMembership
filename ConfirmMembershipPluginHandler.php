@@ -129,42 +129,34 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $assignments = [];
 
-        // Fetching stage assignments for the user.
-        // Uses submissions.last_modified, the same date ConfirmMembershipTask::userHasSubmission()
-        // uses to decide whether the user can be deleted.
+        // All submissions the user is assigned to, either as a stage participant (review = false)
+        // or as a reviewer (review = true).
+        // Date = latest event_log entry on the submission (by any user), same source as the
+        // submission's Activity Log. NULL if the submission has no log entries.
         $result = DB::select(
-            'SELECT s.submission_id, p.path, s.last_modified::date AS last_modified
-         FROM presses p
-         JOIN submissions s ON s.context_id = p.press_id
-         JOIN stage_assignments sa ON sa.submission_id = s.submission_id
-         WHERE sa.user_id = ?',
-            [$userId]
+            'SELECT s.submission_id, p.path, a.review,
+                (SELECT MAX(el.date_logged)
+                   FROM event_log el
+                  WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id)::date AS last_modified
+         FROM (
+             SELECT sa.submission_id, 0 AS review FROM stage_assignments sa WHERE sa.user_id = ?
+             UNION
+             SELECT ra.submission_id, 1 AS review FROM review_assignments ra WHERE ra.reviewer_id = ?
+         ) a
+         JOIN submissions s ON s.submission_id = a.submission_id
+         JOIN presses p ON p.press_id = s.context_id',
+            [
+                Application::ASSOC_TYPE_SUBMISSION,
+                $userId,
+                $userId,
+            ]
         );
 
         foreach ($result as $row) {
             $assignments[] = [
                 'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
                 'date' => $row->last_modified,
-                'review' => false,
-            ];
-        }
-
-        // Fetching review assignments for the user.
-        // Uses review_assignments.last_modified, the same date ConfirmMembershipTask::userHasReviews() uses.
-        $result = $this->stageAssignmentDao->retrieve(
-            'SELECT s.submission_id, p.path, ra.last_modified::date
-         FROM presses p
-         JOIN submissions s ON s.context_id = p.press_id
-         JOIN review_assignments ra ON ra.submission_id = s.submission_id
-         WHERE ra.reviewer_id = ?',
-            [$userId]
-        );
-
-        foreach ($result as $row) {
-            $assignments[] = [
-                'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
-                'date' => $row->last_modified,
-                'review' => true,
+                'review' => (int) $row->review === 1,
             ];
         }
 
