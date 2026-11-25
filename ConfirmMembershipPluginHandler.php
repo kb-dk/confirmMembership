@@ -139,9 +139,9 @@ class ConfirmMembershipPluginHandler extends Handler
                    FROM event_log el
                   WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id)::date AS last_modified
          FROM (
-             SELECT sa.submission_id, FALSE AS review FROM stage_assignments sa WHERE sa.user_id = ?
+             SELECT sa.submission_id, 0 AS review FROM stage_assignments sa WHERE sa.user_id = ?
              UNION
-             SELECT ra.submission_id, TRUE AS review FROM review_assignments ra WHERE ra.reviewer_id = ?
+             SELECT ra.submission_id, 1 AS review FROM review_assignments ra WHERE ra.reviewer_id = ?
          ) a
          JOIN submissions s ON s.submission_id = a.submission_id
          JOIN presses p ON p.press_id = s.context_id',
@@ -156,8 +156,8 @@ class ConfirmMembershipPluginHandler extends Handler
             $assignments[] = [
                 'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
                 'date' => $row->last_modified,
-                'review' => (bool) $row->review,
-            ];
+                view' => (int) $row->review === 1,
+            ]; 're
         }
 
         return $assignments;
