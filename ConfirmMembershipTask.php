@@ -190,24 +190,18 @@ class ConfirmMembershipTask extends ScheduledTask {
 
     /**
      * SQL expression for the last activity on submission "s": the latest event_log entry
-     * on the submission or one of its files (by any user), falling back to
-     * submissions.last_modified if the submission has no log entries.
+     * on the submission (by any user), same source as the submission's Activity Log.
+     * NULL if the submission has no log entries.
      * Bind with submissionLastActivityParams().
      */
     private function submissionLastActivitySql(): string {
-        return 'COALESCE(
-                    (SELECT MAX(el.date_logged)
-                       FROM event_log el
-                      WHERE (el.assoc_type = ? AND el.assoc_id = s.submission_id)
-                         OR (el.assoc_type = ? AND el.assoc_id IN (
-                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = s.submission_id
-                            ))),
-                    s.last_modified
-                )';
+        return '(SELECT MAX(el.date_logged)
+                   FROM event_log el
+                  WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id)';
     }
 
     private function submissionLastActivityParams(): array {
-        return [Application::ASSOC_TYPE_SUBMISSION, Application::ASSOC_TYPE_SUBMISSION_FILE];
+        return [Application::ASSOC_TYPE_SUBMISSION];
     }
     public function getName() {
         return __('admin.scheduledTask.ConfirmMembershipTask');

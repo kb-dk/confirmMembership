@@ -131,19 +131,13 @@ class ConfirmMembershipPluginHandler extends Handler
 
         // All submissions the user is assigned to, either as a stage participant (review = false)
         // or as a reviewer (review = true).
-        // Date = latest event_log entry on the submission or one of its files (by any user);
-        // falls back to submissions.last_modified if the submission has no log entries.
+        // Date = latest event_log entry on the submission (by any user), same source as the
+        // submission's Activity Log. NULL if the submission has no log entries.
         $result = DB::select(
             'SELECT s.submission_id, p.path, a.review,
-                COALESCE(
-                    (SELECT MAX(el.date_logged)
-                       FROM event_log el
-                      WHERE (el.assoc_type = ? AND el.assoc_id = s.submission_id)
-                         OR (el.assoc_type = ? AND el.assoc_id IN (
-                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = s.submission_id
-                            ))),
-                    s.last_modified
-                )::date AS last_modified
+                (SELECT MAX(el.date_logged)
+                   FROM event_log el
+                  WHERE el.assoc_type = ? AND el.assoc_id = s.submission_id)::date AS last_modified
          FROM (
              SELECT sa.submission_id, FALSE AS review FROM stage_assignments sa WHERE sa.user_id = ?
              UNION
@@ -153,7 +147,6 @@ class ConfirmMembershipPluginHandler extends Handler
          JOIN presses p ON p.press_id = s.context_id',
             [
                 Application::ASSOC_TYPE_SUBMISSION,
-                Application::ASSOC_TYPE_SUBMISSION_FILE,
                 $userId,
                 $userId,
             ]
