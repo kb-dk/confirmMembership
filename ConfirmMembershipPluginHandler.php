@@ -7,7 +7,6 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\handler\Handler;
 use Illuminate\Support\Facades\DB;
-use APP\log\event\SubmissionEventLogEntry;
 use PKP\user\Repository;
 use PKP\lib\pkp\classes\plugins\Plugin;
 use PKP\classes\user\UserAction;
@@ -130,74 +129,32 @@ class ConfirmMembershipPluginHandler extends Handler
     {
         $assignments = [];
 
-        // Latest event_log entry made by the user on a submission, including events on its files.
-        // Used as "last activity" date. Parameters: ASSOC_TYPE_SUBMISSION, ASSOC_TYPE_SUBMISSION_FILE, user id.
-        $lastActivitySql = '(SELECT MAX(el.date_logged)
-              FROM event_log el
-              WHERE el.user_id = ?
-                AND (
-                    (el.assoc_type = ? AND el.assoc_id = s.submission_id)
-                    OR (el.assoc_type = ? AND el.assoc_id IN (
-                        SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = s.submission_id
-                    ))
-                ))';
-        $lastActivityParams = [
-            $userId,
-            Application::ASSOC_TYPE_SUBMISSION,
-            Application::ASSOC_TYPE_SUBMISSION_FILE,
-        ];
-
-        // Fetching stage assignments for the user.
-        // Date = latest event_log entry by the user on the submission; falls back to the
-        // assignment date if the user has no log entries.
+        // All submissions the user is assigned to, either as a stage participant (review = false)
+        // or as a reviewer (review = true).
+        // Date = latest event_log entry on the submission or one of its files (by any user);
+        // falls back to submissions.last_modified if the submission has no log entries.
         $result = DB::select(
-            'SELECT s.submission_id, p.path,
-                COALESCE(' . $lastActivitySql . ', MIN(sa.date_assigned))::date AS last_modified
-         FROM presses p
-         JOIN submissions s ON s.context_id = p.press_id
-         JOIN stage_assignments sa ON sa.submission_id = s.submission_id
-         WHERE sa.user_id = ?
-         GROUP BY s.submission_id, p.path',
-            [...$lastActivityParams, $userId]
-        );
-
-        foreach ($result as $row) {
-            $assignments[] = [
-                'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
-                'date' => $row->last_modified,
-                'review' => false,
-            ];
-        }
-
-        // Fetching review assignments for the user.
-        // Declined review: date of the decline event (fallback: review_assignments.date_confirmed).
-        // Otherwise: latest event_log entry by the user on the submission (fallback: review_assignments.last_modified).
-        $result = DB::select(
-            'SELECT s.submission_id, p.path,
-                (CASE WHEN ra.declined = 1 THEN
-                    COALESCE(
-                        (SELECT MAX(el.date_logged)
-                           FROM event_log el
-                           JOIN event_log_settings els ON els.log_id = el.log_id
-                          WHERE el.event_type = ?
-                            AND el.assoc_type = ?
-                            AND el.assoc_id = s.submission_id
-                            AND els.setting_name = \'reviewAssignmentId\'
-                            AND els.setting_value = ra.review_id::text),
-                        ra.date_confirmed,
-                        ra.last_modified
-                    )
-                 ELSE
-                    COALESCE(' . $lastActivitySql . ', ra.last_modified)
-                 END)::date AS last_modified
-         FROM presses p
-         JOIN submissions s ON s.context_id = p.press_id
-         JOIN review_assignments ra ON ra.submission_id = s.submission_id
-         WHERE ra.reviewer_id = ?',
+            'SELECT s.submission_id, p.path, a.review,
+                COALESCE(
+                    (SELECT MAX(el.date_logged)
+                       FROM event_log el
+                      WHERE (el.assoc_type = ? AND el.assoc_id = s.submission_id)
+                         OR (el.assoc_type = ? AND el.assoc_id IN (
+                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = s.submission_id
+                            ))),
+                    s.last_modified
+                )::date AS last_modified
+         FROM (
+             SELECT sa.submission_id, FALSE AS review FROM stage_assignments sa WHERE sa.user_id = ?
+             UNION
+             SELECT ra.submission_id, TRUE AS review FROM review_assignments ra WHERE ra.reviewer_id = ?
+         ) a
+         JOIN submissions s ON s.submission_id = a.submission_id
+         JOIN presses p ON p.press_id = s.context_id',
             [
-                SubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_DECLINE,
                 Application::ASSOC_TYPE_SUBMISSION,
-                ...$lastActivityParams,
+                Application::ASSOC_TYPE_SUBMISSION_FILE,
+                $userId,
                 $userId,
             ]
         );
@@ -206,7 +163,7 @@ class ConfirmMembershipPluginHandler extends Handler
             $assignments[] = [
                 'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
                 'date' => $row->last_modified,
-                'review' => true,
+                'review' => (bool) $row->review,
             ];
         }
 

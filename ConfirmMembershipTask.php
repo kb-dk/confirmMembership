@@ -14,6 +14,7 @@ namespace APP\plugins\generic\confirmMembership;
  * @copydoc ScheduledTask::executeActions()
  */
 
+use APP\core\Application;
 use APP\core\Services;
 use APP\plugins\generic\confirmMembership\ConfirmMembershipPlugin;
 use Illuminate\Support\Facades\Mail;
@@ -128,7 +129,7 @@ class ConfirmMembershipTask extends ScheduledTask {
     }
     private function mergeUsers($userDao, $pressDao, $roleIds, $user, $mergesUserId, $jobsAutoDeleteAge) {
 
-        if ($this->userHasReviews($user->getId(), $jobsAutoDeleteAge) || $this->userHasSubmission($user->getId(), $jobsAutoDeleteAge) ) {
+        if ($this->userHasReviews($user->getId(), $jobsAutoDeleteAge) || $this->userHasSubmission($user->getId(), $jobsAutoDeleteAge)) {
             $this->userCantBeDeleted($user, $userDao);
             return;
         }
@@ -151,18 +152,62 @@ class ConfirmMembershipTask extends ScheduledTask {
         DB::insert("insert into user_settings(user_id, locale, setting_name, setting_value ) values(?,'en', ?,?) ",[$user->getId(), 'membershipcannotdelete', true ]);
         return true;
     }
-    private function userHasReviews($userId, $jobsAutoDeleteAge) {
-        $reviewersignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $reviewersignmentDao->retrieve("SELECT count(*)  AS row_count  FROM review_assignments  where reviewer_id = ? and last_modified > DATE(?) - interval ' $jobsAutoDeleteAge days' ", [$userId, Core::getCurrentDate()]);
-        $row = $checkUserSubmissions->current();
-        return $row ? (boolean) $row->row_count : false;
+    /**
+     * Does the user have a review assignment on a submission that has been active
+     * within the last $jobsAutoDeleteAge days?
+     */
+    private function userHasReviews($userId, $jobsAutoDeleteAge): bool {
+        $result = DB::select(
+            'SELECT EXISTS (
+                SELECT 1
+                  FROM review_assignments ra
+                  JOIN submissions s ON s.submission_id = ra.submission_id
+                 WHERE ra.reviewer_id = ?
+                   AND ' . $this->submissionLastActivitySql() . ' > DATE(?) - (? * INTERVAL \'1 day\')
+            ) AS has_recent',
+            [$userId, ...$this->submissionLastActivityParams(), Core::getCurrentDate(), (int) $jobsAutoDeleteAge]
+        );
+        return (bool) $result[0]->has_recent;
     }
-    private function userHasSubmission($userId, $jobsAutoDeleteAge) {
-        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var stageAssignmentDao StageAssignmentDAO */
-        $checkUserSubmissions = $stageAssignmentDao->retrieve("select count(*) AS row_count  from stage_assignments join submissions on stage_assignments.submission_id =submissions.submission_id where last_modified  >  DATE(?) - interval ' $jobsAutoDeleteAge days' and user_id = ?", [Core::getCurrentDate(), $userId]);
-        $current = $checkUserSubmissions->current();
-        $row = $current;
-        return $row ? (boolean) $row->row_count : false;
+
+    /**
+     * Does the user have a stage assignment on a submission that has been active
+     * within the last $jobsAutoDeleteAge days?
+     */
+    private function userHasSubmission($userId, $jobsAutoDeleteAge): bool {
+        $result = DB::select(
+            'SELECT EXISTS (
+                SELECT 1
+                  FROM stage_assignments sa
+                  JOIN submissions s ON s.submission_id = sa.submission_id
+                 WHERE sa.user_id = ?
+                   AND ' . $this->submissionLastActivitySql() . ' > DATE(?) - (? * INTERVAL \'1 day\')
+            ) AS has_recent',
+            [$userId, ...$this->submissionLastActivityParams(), Core::getCurrentDate(), (int) $jobsAutoDeleteAge]
+        );
+        return (bool) $result[0]->has_recent;
+    }
+
+    /**
+     * SQL expression for the last activity on submission "s": the latest event_log entry
+     * on the submission or one of its files (by any user), falling back to
+     * submissions.last_modified if the submission has no log entries.
+     * Bind with submissionLastActivityParams().
+     */
+    private function submissionLastActivitySql(): string {
+        return 'COALESCE(
+                    (SELECT MAX(el.date_logged)
+                       FROM event_log el
+                      WHERE (el.assoc_type = ? AND el.assoc_id = s.submission_id)
+                         OR (el.assoc_type = ? AND el.assoc_id IN (
+                                SELECT sf.submission_file_id FROM submission_files sf WHERE sf.submission_id = s.submission_id
+                            ))),
+                    s.last_modified
+                )';
+    }
+
+    private function submissionLastActivityParams(): array {
+        return [Application::ASSOC_TYPE_SUBMISSION, Application::ASSOC_TYPE_SUBMISSION_FILE];
     }
     public function getName() {
         return __('admin.scheduledTask.ConfirmMembershipTask');
