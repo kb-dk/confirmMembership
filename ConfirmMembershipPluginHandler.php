@@ -156,8 +156,8 @@ class ConfirmMembershipPluginHandler extends Handler
             $assignments[] = [
                 'url' => '/index.php/' . $row->path . '/workflow/index/' . $row->submission_id . '/1',
                 'date' => $row->last_modified,
-                view' => (int) $row->review === 1,
-            ]; 're
+                'review' => (int) $row->review === 1,
+            ];
         }
 
         return $assignments;
